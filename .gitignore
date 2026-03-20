@@ -1,0 +1,60 @@
+# === Project Plan (not part of deliverable) ===
+PLAN.md
+
+# === OS / Editor artifacts ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# === MATLAB generated files ===
+matlab/*.asv
+matlab/*.mat
+matlab/*.fig
+
+# === Simulation artifacts ===
+work/
+transcript
+vsim.wlf
+*.vcd
+*.wlf
+*.log
+
+# === Quartus / Vivado build artifacts ===
+syn/**/db/
+syn/**/incremental_db/
+syn/**/.qsys_edit/
+syn/**/*.qpf
+syn/**/*.qsf
+syn/**/*.rpt
+syn/**/output_files/
+*.jdi
+*.sof
+*.pof
+
+# Vivado
+*.xpr
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+.Xil/
+
+# Synopsys DC
+alib-52/
+command.log
+default.svf
+*.pvl
+*.syn
+*.mr
+
+# === Python / Jupyter (if used) ===
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# === Misc ===
+*.bak
+*.tmp
