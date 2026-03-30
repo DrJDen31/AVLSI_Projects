@@ -106,6 +106,9 @@ fprintf('Output Width:      %2d bits (truncated/rounded from accumulator)\n', in
 [H_quant, W_quant] = freqz(best_hq, 1, 1024);
 
 figure('Name', 'Quantization Effects', 'Position', [150, 150, 800, 500]);
+set(gcf, 'Color', 'w');
+set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+
 plot(W/pi, 20*log10(abs(H_ideal)), 'b-', 'LineWidth', 1.5);
 hold on; grid on;
 plot(W_quant/pi, 20*log10(abs(H_quant)), 'r--', 'LineWidth', 1.5);
@@ -118,6 +121,9 @@ xlabel('Normalized Frequency (\times\pi rad/sample)');
 ylabel('Magnitude (dB)');
 axis([0 1 -120 10]);
 legend('Ideal (Double Precision)', sprintf('Quantized (%d-bit)', coeff_bits), 'Location', 'SouthWest');
+
+% Export the figure
+exportgraphics(gcf, '../img/Quantization_Effects.png', 'Resolution', 300, 'BackgroundColor', 'w');
 
 %% 6. Convert Quantized Coefficients to Integer Format for Verilog
 % Multiply by 2^frac_bits to get raw integer values
@@ -138,7 +144,7 @@ fprintf(fout, '  localparam int COEFF_W  = %d;\n', coeff_bits);
 fprintf(fout, '  localparam int DATA_W   = %d;\n', input_bits);
 fprintf(fout, '  localparam int ACC_W    = %d;\n\n', acc_bits);
 fprintf(fout, '  // %d-bit fractional format (Q1.%d)\n', coeff_bits, best_frac_bits);
-fprintf(fout, '  localparam signed [COEFF_W-1:0] COEFFS [0:N_TAPS-1] = ''{\n');
+fprintf(fout, '  localparam logic signed [COEFF_W-1:0] COEFFS [0:N_TAPS-1] = ''{\n');
 
 for i = 1:N
     % Convert negative numbers to 2's complement hex for cleaner representation

@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*;
 
 module fir_fastfir_L3 (

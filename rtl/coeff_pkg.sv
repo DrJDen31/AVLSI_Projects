@@ -7,7 +7,7 @@ package coeff_pkg;
   localparam int ACC_W    = 49;
 
   // 23-bit fractional format (Q1.22)
-  localparam signed [COEFF_W-1:0] COEFFS [0:N_TAPS-1] = '{
+  localparam logic signed [COEFF_W-1:0] COEFFS [0:N_TAPS-1] = '{
     23'h0002B2,
     23'h0005E1,
     23'h000A46,

@@ -1,0 +1,9 @@
+arch=fir_parallel_L2
+alms=14119
+regs=2850
+dsps=156
+fmax=36.8
+slack=-17.195
+power=227.98
+status=OK
+timestamp=Wed Mar 25 19:33:06 EDT 2026

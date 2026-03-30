@@ -1,0 +1,9 @@
+arch=fir_direct
+alms=2003
+regs=2802
+dsps=156
+fmax=34.1
+slack=-19.294
+power=122.56
+status=OK
+timestamp=Wed Mar 25 19:13:08 EDT 2026

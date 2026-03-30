@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*;
 
 module fir_pipelined #(
@@ -35,6 +33,9 @@ module fir_pipelined #(
     // We break the N_TAPS additions into NUM_STAGES chunks.
     logic signed [ACC_W-1:0] acc_pipe [0:NUM_STAGES];
 
+    // Pre-declared chunk sum for pipeline stages (hoisted out of always_ff)
+    logic signed [ACC_W-1:0] chunk_sum [0:NUM_STAGES-1];
+
     // 1. Shift Register (Delay Line)
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -60,10 +61,19 @@ module fir_pipelined #(
         end
     end
 
-    // 3. Pipelined Transposed/Chunk Accumulator
-    // We sum a chunk of 'PIPE_EVERY' taps, add it to the sum from the previous stage,
-    // and clock it into the next pipeline register.
-    
+    // 3. Compute chunk sums (Combinational)
+    always_comb begin
+        for (int s = 0; s < NUM_STAGES; s++) begin
+            chunk_sum[s] = '0;
+            for (int j = 0; j < PIPE_EVERY; j++) begin
+                if (s * PIPE_EVERY + j < N_TAPS) begin
+                    chunk_sum[s] = chunk_sum[s] + {{ (ACC_W - MULT_W){mult_out[s * PIPE_EVERY + j][MULT_W-1]} }, mult_out[s * PIPE_EVERY + j]};
+                end
+            end
+        end
+    end
+
+    // 4. Pipelined Accumulator (Sequential)
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (int s = 0; s <= NUM_STAGES; s++) begin
@@ -71,38 +81,23 @@ module fir_pipelined #(
                 if (s > 0) valid_sr[s] <= 1'b0;
             end
         end else begin
-            // acc_pipe[0] is just 0 to start the chain
             acc_pipe[0] <= '0;
             
             for (int s = 0; s < NUM_STAGES; s++) begin
                 valid_sr[s+1] <= valid_sr[s];
                 
-                // If the pipeline is valid (data is flowing), perform MAC
                 if (valid_sr[s]) begin
-                    logic signed [ACC_W-1:0] chunk_sum;
-                    chunk_sum = '0;
-                    
-                    // Sum up to PIPE_EVERY taps for this stage
-                    for (int j = 0; j < PIPE_EVERY; j++) begin
-                        int tap_idx = s * PIPE_EVERY + j;
-                        if (tap_idx < N_TAPS) begin
-                            chunk_sum = chunk_sum + {{ (ACC_W - MULT_W){mult_out[tap_idx][MULT_W-1]} }, mult_out[tap_idx]};
-                        end
-                    end
-                    
-                    // Add this chunk's sum to the accumulated sum from the previous stage
-                    acc_pipe[s+1] <= acc_pipe[s] + chunk_sum;
+                    acc_pipe[s+1] <= acc_pipe[s] + chunk_sum[s];
                 end
             end
         end
     end
 
-    // 4. Output Stage
+    // 5. Output Stage
     localparam int COEFF_FRAC_BITS = COEFF_W - 1;
     
     always_comb begin
         valid_out = valid_sr[NUM_STAGES];
-        // Slicing the final pipeline register to get standard DATA_W output
         data_out  = acc_pipe[NUM_STAGES][COEFF_FRAC_BITS +: DATA_W];
     end
 

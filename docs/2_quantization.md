@@ -15,6 +15,8 @@ To find the optimal coefficient width, we swept through a range of fractional bi
 
 Our analysis showed that **22 fractional bits** were the minimum required to re-attain the 80 dB attenuation post-quantization. With 1 sign bit, this gives a total coefficient width of **23 bits (format Q0.22).**
 
+![Quantization Effects](../img/Quantization_Effects.png)
+
 ## Overflow Prevention
 FIR convolutions sum the products of input data and coefficients. Without proper bit-width accounting, this summation will overflow the arithmetic accumulator.
 

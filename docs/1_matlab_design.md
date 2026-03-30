@@ -11,8 +11,7 @@ The final filter was designed using these parameters:
 - **Stopband Edge**: $0.23\pi$
 - **Weighting**: Ratio of stopband ripple target to passband ripple target to aggressively emphasize the 80 dB stopband.
 
-![](../img/filter_design.png)
-*(Note: Insert the generated magnitude response plot here)*
+![FIR Filter Frequency Response](../img/FIR_Filter_Frequency_Response.png)
 
 ## Verification Stimulus Generation
 To verify the Verilog implementations, test vectors were generated mathematically and saved as hex files:

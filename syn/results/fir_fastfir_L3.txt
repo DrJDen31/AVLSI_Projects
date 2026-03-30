@@ -1,0 +1,9 @@
+arch=fir_fastfir_L3
+alms=25604
+regs=5956
+dsps=0
+fmax=35.0
+slack=-18.607
+power=302.06
+status=OK
+timestamp=Wed Mar 25 20:28:19 EDT 2026

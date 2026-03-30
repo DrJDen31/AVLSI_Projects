@@ -1,0 +1,1 @@
+Warning (10268): Verilog HDL information at fir_pipe_fastfir_L3.sv(119): always construct contains both blocking and non-blocking assignments File: C:/Users/jaden/OneDrive/Documents/RPI/Spring2026/AdvVLSI/Projects/rtl/fir_pipe_fastfir_L3.sv Line: 119

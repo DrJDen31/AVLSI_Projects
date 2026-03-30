@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*;
 
 module fir_pipe_fastfir_L3 #(
@@ -115,7 +113,36 @@ module fir_pipe_fastfir_L3 #(
     logic signed [ACC_W-1:0] acc_p3_pipe [0:NUM_STAGES];
     logic signed [ACC_W-1:0] acc_p4_pipe [0:NUM_STAGES];
     logic signed [ACC_W-1:0] acc_p5_pipe [0:NUM_STAGES];
+
+    // Hoisted chunk sums (module scope for Quartus compatibility)
+    logic signed [ACC_W-1:0] c_p0 [0:NUM_STAGES-1];
+    logic signed [ACC_W-1:0] c_p1 [0:NUM_STAGES-1];
+    logic signed [ACC_W-1:0] c_p2 [0:NUM_STAGES-1];
+    logic signed [ACC_W-1:0] c_p3 [0:NUM_STAGES-1];
+    logic signed [ACC_W-1:0] c_p4 [0:NUM_STAGES-1];
+    logic signed [ACC_W-1:0] c_p5 [0:NUM_STAGES-1];
+
+    // Compute chunk sums (Combinational)
+    always_comb begin
+        for (int s = 0; s < NUM_STAGES; s++) begin
+            c_p0[s] = '0; c_p1[s] = '0; c_p2[s] = '0;
+            c_p3[s] = '0; c_p4[s] = '0; c_p5[s] = '0;
+            
+            for (int j = 0; j < PIPE_EVERY; j++) begin
+                if (s * PIPE_EVERY + j < L3_TAPS) begin
+                    c_p0[s] = c_p0[s] + {{ (ACC_W - MULT_W){m_p0[s * PIPE_EVERY + j][MULT_W-1]} }, m_p0[s * PIPE_EVERY + j]};
+                    c_p1[s] = c_p1[s] + {{ (ACC_W - MULT_W){m_p1[s * PIPE_EVERY + j][MULT_W-1]} }, m_p1[s * PIPE_EVERY + j]};
+                    c_p2[s] = c_p2[s] + {{ (ACC_W - MULT_W){m_p2[s * PIPE_EVERY + j][MULT_W-1]} }, m_p2[s * PIPE_EVERY + j]};
+                    
+                    c_p3[s] = c_p3[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p3[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p3[s * PIPE_EVERY + j]};
+                    c_p4[s] = c_p4[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p4[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p4[s * PIPE_EVERY + j]};
+                    c_p5[s] = c_p5[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p5[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p5[s * PIPE_EVERY + j]};
+                end
+            end
+        end
+    end
     
+    // Pipelined accumulation (Sequential)
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (int s = 0; s <= NUM_STAGES; s++) begin
@@ -131,28 +158,12 @@ module fir_pipe_fastfir_L3 #(
                 valid_sr[s+1] <= valid_sr[s];
                 
                 if (valid_sr[s]) begin
-                    logic signed [ACC_W-1:0] c_p0 = '0, c_p1 = '0, c_p2 = '0;
-                    logic signed [ACC_W-1:0] c_p3 = '0, c_p4 = '0, c_p5 = '0;
-                    
-                    for (int j = 0; j < PIPE_EVERY; j++) begin
-                        int tap_idx = s * PIPE_EVERY + j;
-                        if (tap_idx < L3_TAPS) begin
-                            c_p0 += {{ (ACC_W - MULT_W){m_p0[tap_idx][MULT_W-1]} }, m_p0[tap_idx]};
-                            c_p1 += {{ (ACC_W - MULT_W){m_p1[tap_idx][MULT_W-1]} }, m_p1[tap_idx]};
-                            c_p2 += {{ (ACC_W - MULT_W){m_p2[tap_idx][MULT_W-1]} }, m_p2[tap_idx]};
-                            
-                            c_p3 += {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p3[tap_idx][DATA_W+COEFF_W+1]} }, m_p3[tap_idx]};
-                            c_p4 += {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p4[tap_idx][DATA_W+COEFF_W+1]} }, m_p4[tap_idx]};
-                            c_p5 += {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p5[tap_idx][DATA_W+COEFF_W+1]} }, m_p5[tap_idx]};
-                        end
-                    end
-                    
-                    acc_p0_pipe[s+1] <= acc_p0_pipe[s] + c_p0;
-                    acc_p1_pipe[s+1] <= acc_p1_pipe[s] + c_p1;
-                    acc_p2_pipe[s+1] <= acc_p2_pipe[s] + c_p2;
-                    acc_p3_pipe[s+1] <= acc_p3_pipe[s] + c_p3;
-                    acc_p4_pipe[s+1] <= acc_p4_pipe[s] + c_p4;
-                    acc_p5_pipe[s+1] <= acc_p5_pipe[s] + c_p5;
+                    acc_p0_pipe[s+1] <= acc_p0_pipe[s] + c_p0[s];
+                    acc_p1_pipe[s+1] <= acc_p1_pipe[s] + c_p1[s];
+                    acc_p2_pipe[s+1] <= acc_p2_pipe[s] + c_p2[s];
+                    acc_p3_pipe[s+1] <= acc_p3_pipe[s] + c_p3[s];
+                    acc_p4_pipe[s+1] <= acc_p4_pipe[s] + c_p4[s];
+                    acc_p5_pipe[s+1] <= acc_p5_pipe[s] + c_p5[s];
                 end
             end
         end

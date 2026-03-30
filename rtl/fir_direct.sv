@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*; // Import N_TAPS, COEFF_W, DATA_W, ACC_W, and COEFFS array
 
 module fir_direct (

@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*;
 
 module fir_fastfir_L2 (
@@ -16,14 +14,6 @@ module fir_fastfir_L2 (
 );
 
     // L=2 Fast FIR Algorithm (Reduced Complexity)
-    // Equations:
-    // H0' = H0
-    // H1' = H1
-    // H2' = H0 + H1
-    
-    // Y0 = H0'*x0 + z^-1(H1'*x1)
-    // Y1 = H2'*(x0+x1) - H0'*x0 - H1'*x1
-    
     // Subfilter outputs:
     // P0 = H0 * x0
     // P1 = H1 * x1
@@ -69,7 +59,16 @@ module fir_fastfir_L2 (
     
     logic valid_p1;
 
-    // Shift Registers
+    // Subfilter Combinational MAC
+    logic signed [MULT_W-1:0] m_p0;
+    logic signed [MULT_W-1:0] m_p1;
+    logic signed [DATA_W+COEFF_W+1:0] m_p2; // Multiplier is (DATA_W+1)*(COEFF_W+1)
+    
+    logic signed [ACC_W-1:0] acc_p0;
+    logic signed [ACC_W-1:0] acc_p1;
+    logic signed [ACC_W-1:0] acc_p2;
+
+    // Shift Registers and z^-1 delay (single always_ff to avoid multiple drivers)
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (int i = 0; i < L2_TAPS; i++) begin
@@ -91,21 +90,12 @@ module fir_fastfir_L2 (
                     dl_x1[i] <= dl_x1[i-1];
                     dl_x0_plus_x1[i] <= dl_x0_plus_x1[i-1];
                 end
+                
+                // z^-1 delay for the accumulated P1 output
+                acc_p1_delayed <= acc_p1;
             end
-            
-            // z^-1 delay is on the full accumulated Subfilter 1 output
-            // (combinational logic calculates acc_p1 below)
         end
     end
-
-    // Subfilter Combinational MAC
-    logic signed [MULT_W-1:0] m_p0;
-    logic signed [MULT_W-1:0] m_p1;
-    logic signed [DATA_W+COEFF_W+1:0] m_p2; // Multiplier is (DATA_W+1)*(COEFF_W+1)
-    
-    logic signed [ACC_W-1:0] acc_p0;
-    logic signed [ACC_W-1:0] acc_p1;
-    logic signed [ACC_W-1:0] acc_p2;
     
     always_comb begin
         acc_p0 = '0;
@@ -121,12 +111,6 @@ module fir_fastfir_L2 (
             acc_p1 = acc_p1 + {{ (ACC_W - MULT_W){m_p1[MULT_W-1]} }, m_p1};
             acc_p2 = acc_p2 + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p2[DATA_W+COEFF_W+1]} }, m_p2};
         end
-    end
-
-    // Sequential update for z^-1(P1)
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) acc_p1_delayed <= '0;
-        else if (valid_in) acc_p1_delayed <= acc_p1;
     end
 
     // Post-addition network and Output

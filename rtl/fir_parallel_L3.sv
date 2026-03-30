@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 import coeff_pkg::*;
 
 module fir_parallel_L3 (
@@ -89,6 +87,17 @@ module fir_parallel_L3 (
         end
     end
 
+    // Hoisted multiplier results (module scope for Quartus compatibility)
+    logic signed [MULT_W-1:0] m_h0_x0 [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h1_x2_d [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h2_x1_d [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h0_x1 [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h1_x0 [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h2_x2_d [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h0_x2 [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h1_x1 [0:L3_TAPS-1];
+    logic signed [MULT_W-1:0] m_h2_x0 [0:L3_TAPS-1];
+
     logic signed [ACC_W-1:0] acc_y0, acc_y1, acc_y2;
     
     always_comb begin
@@ -96,32 +105,32 @@ module fir_parallel_L3 (
         
         for (int i = 0; i < L3_TAPS; i++) begin
             // Multiplications (9 per macro-tap)
-            logic signed [MULT_W-1:0] m_h0_x0 = dl_x0[i] * h0[i];
-            logic signed [MULT_W-1:0] m_h1_x2_d = dl_x2_delayed[i] * h1[i];
-            logic signed [MULT_W-1:0] m_h2_x1_d = dl_x1_delayed[i] * h2[i];
+            m_h0_x0[i] = dl_x0[i] * h0[i];
+            m_h1_x2_d[i] = dl_x2_delayed[i] * h1[i];
+            m_h2_x1_d[i] = dl_x1_delayed[i] * h2[i];
             
-            logic signed [MULT_W-1:0] m_h0_x1 = dl_x1[i] * h0[i];
-            logic signed [MULT_W-1:0] m_h1_x0 = dl_x0[i] * h1[i];
-            logic signed [MULT_W-1:0] m_h2_x2_d = dl_x2_delayed[i] * h2[i];
+            m_h0_x1[i] = dl_x1[i] * h0[i];
+            m_h1_x0[i] = dl_x0[i] * h1[i];
+            m_h2_x2_d[i] = dl_x2_delayed[i] * h2[i];
             
-            logic signed [MULT_W-1:0] m_h0_x2 = dl_x2[i] * h0[i];
-            logic signed [MULT_W-1:0] m_h1_x1 = dl_x1[i] * h1[i];
-            logic signed [MULT_W-1:0] m_h2_x0 = dl_x0[i] * h2[i];
+            m_h0_x2[i] = dl_x2[i] * h0[i];
+            m_h1_x1[i] = dl_x1[i] * h1[i];
+            m_h2_x0[i] = dl_x0[i] * h2[i];
             
             // Accumulate y0 = H0*x0 + z^-1(H1)*x2 + z^-1(H2)*x1
-            acc_y0 = acc_y0 + {{ (ACC_W - MULT_W){m_h0_x0[MULT_W-1]} }, m_h0_x0} 
-                            + {{ (ACC_W - MULT_W){m_h1_x2_d[MULT_W-1]} }, m_h1_x2_d}
-                            + {{ (ACC_W - MULT_W){m_h2_x1_d[MULT_W-1]} }, m_h2_x1_d};
+            acc_y0 = acc_y0 + {{ (ACC_W - MULT_W){m_h0_x0[i][MULT_W-1]} }, m_h0_x0[i]} 
+                            + {{ (ACC_W - MULT_W){m_h1_x2_d[i][MULT_W-1]} }, m_h1_x2_d[i]}
+                            + {{ (ACC_W - MULT_W){m_h2_x1_d[i][MULT_W-1]} }, m_h2_x1_d[i]};
                             
             // Accumulate y1 = H0*x1 + H1*x0 + z^-1(H2)*x2
-            acc_y1 = acc_y1 + {{ (ACC_W - MULT_W){m_h0_x1[MULT_W-1]} }, m_h0_x1} 
-                            + {{ (ACC_W - MULT_W){m_h1_x0[MULT_W-1]} }, m_h1_x0}
-                            + {{ (ACC_W - MULT_W){m_h2_x2_d[MULT_W-1]} }, m_h2_x2_d};
+            acc_y1 = acc_y1 + {{ (ACC_W - MULT_W){m_h0_x1[i][MULT_W-1]} }, m_h0_x1[i]} 
+                            + {{ (ACC_W - MULT_W){m_h1_x0[i][MULT_W-1]} }, m_h1_x0[i]}
+                            + {{ (ACC_W - MULT_W){m_h2_x2_d[i][MULT_W-1]} }, m_h2_x2_d[i]};
                             
             // Accumulate y2 = H0*x2 + H1*x1 + H2*x0
-            acc_y2 = acc_y2 + {{ (ACC_W - MULT_W){m_h0_x2[MULT_W-1]} }, m_h0_x2} 
-                            + {{ (ACC_W - MULT_W){m_h1_x1[MULT_W-1]} }, m_h1_x1}
-                            + {{ (ACC_W - MULT_W){m_h2_x0[MULT_W-1]} }, m_h2_x0};
+            acc_y2 = acc_y2 + {{ (ACC_W - MULT_W){m_h0_x2[i][MULT_W-1]} }, m_h0_x2[i]} 
+                            + {{ (ACC_W - MULT_W){m_h1_x1[i][MULT_W-1]} }, m_h1_x1[i]}
+                            + {{ (ACC_W - MULT_W){m_h2_x0[i][MULT_W-1]} }, m_h2_x0[i]};
         end
     end
 

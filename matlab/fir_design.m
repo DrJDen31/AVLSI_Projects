@@ -37,14 +37,22 @@ h_ideal = firpm(N-1, f, m, w);
 
 % Plot the magnitude response
 figure('Name', 'FIR Filter Frequency Response', 'Position', [100, 100, 800, 600]);
+% Force Light Mode
+set(gcf, 'Color', 'w');
 
 subplot(2,1,1);
+% Force Light Mode axes
+set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+
 plot(W/pi, 20*log10(abs(H)), 'b', 'LineWidth', 1.5);
 hold on;
 grid on;
+
 yline(-Astop, 'r--', 'Stopband Spec (-80dB)', 'LabelHorizontalAlignment', 'left');
-xline(Fpass, 'k:', 'Passband Edge (0.2\pi)', 'LabelVerticalAlignment', 'bottom');
-xline(Fstop, 'k:', 'Stopband Edge (0.23\pi)', 'LabelVerticalAlignment', 'bottom');
+xline(Fpass, 'k:');
+xline(Fstop, 'k:');
+text(Fpass - 0.01, -40, sprintf('Passband\nEdge (0.2\\pi)'), 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'BackgroundColor', 'w');
+text(Fstop + 0.01, -40, 'Stopband Edge (0.23\pi)', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', 'BackgroundColor', 'w');
 
 title(sprintf('Ideal %d-Tap FIR Filter Magnitude Response', N));
 xlabel('Normalized Frequency (\times\pi rad/sample)');
@@ -87,6 +95,7 @@ end
 
 %% 4. Impulse Response and Pole-Zero Plot
 subplot(2,2,3);
+set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
 stem(0:N-1, h_ideal, 'Marker', '.', 'MarkerSize', 10);
 title('Impulse Response (Coefficients)');
 xlabel('Sample (n)');
@@ -94,8 +103,12 @@ ylabel('Amplitude');
 grid on;
 
 subplot(2,2,4);
+set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
 zplane(h_ideal, 1);
 title('Pole-Zero Plot');
+
+% Export the figure
+exportgraphics(gcf, '../img/FIR_Filter_Frequency_Response.png', 'Resolution', 300, 'BackgroundColor', 'w');
 
 %% 5. Save Coefficients for Next Stage
 save('fir_coefficients_ideal.mat', 'h_ideal', 'N', 'Fpass', 'Fstop', 'Apass', 'Astop');
