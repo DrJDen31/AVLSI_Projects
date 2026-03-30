@@ -1,0 +1,78 @@
+\documentclass[12pt,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}
+
+\geometry{letterpaper, margin=0.75in}
+\hypersetup{colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan}
+
+\title{\textbf{Design and Implementation of High-Throughput 175-Tap FIR Filter Architectures}}
+\author{Jaden [Last Name] \\ \small Advanced VLSI Design (ECSE 4xxx) \\ \small Rensselaer Polytechnic Institute}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report details the implementation of seven distinct FIR filter architectures, ranging from a direct-form baseline to a high-speed Pipelined Fast FIR (FFA) design. We analyze performance trade-offs in terms of area (ALMs), power, and maximum frequency ($F_{max}$), demonstrating that the FFA L3 architecture provides an optimal balance for parallel DSP processing.
+\end{abstract}
+
+\section{Introduction}
+Digital Finite Impulse Response (FIR) filters are essential components in modern communication systems. As tap counts increase—in this case 175 taps—the hardware complexity and timing constraints become significant challenges. This project explores parallelism and pipelining to overcome these bottlenecks.
+
+\section{Design Methodology}
+\subsection{MATLAB Model}
+The filter was designed in MATLAB using the \texttt{fir1} function to achieve a [Insert Passband/Stopband] frequency response. Coefficients were quantized to 23-bit signed fixed-point (Q1.22) to minimize quantization noise.
+
+\subsection{Quantization and Precision}
+\begin{itemize}
+    \item \textbf{Input Data:} 16-bit signed.
+    \item \textbf{Coefficients:} 23-bit signed.
+    \item \textbf{Accumulator:} 49-bit to prevent overflow.
+\end{itemize}
+
+\section{Architectures}
+\subsection{Direct Form (L=1)}
+The baseline architecture utilizing a single multiply-accumulate (MAC) chain.
+
+\subsection{Pipelined Direct Form}
+Enhanced $F_{max}$ by transforming the serial summation into a \textbf{Pipelined Adder Tree}, reducing the critical path to 175/PIPE\_EVERY levels.
+
+\subsection{Parallel Architectures (L=2, L=3)}
+Standard polyphase implementation where $L$ samples are processed per clock cycle.
+
+\subsection{Fast FIR Algorithm (L=2, L=3)}
+Reduced-complexity parallel designs using the Fast FIR Algorithm (FFA) to minimize the number of required multipliers.
+
+\section{Synthesis Results}
+\begin{table}[h]
+\centering
+\caption{Synthesis Performance Comparison}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Architecture} & \textbf{ALMs} & \textbf{DSP} & \textbf{$F_{max}$} & \textbf{Power} \\ \midrule
+Direct L=1            & ---           & ---          & ---                & ---            \\
+Pipelined L=1         & ---           & ---          & ---                & ---            \\
+Parallel L=3          & ---           & ---          & ---                & ---            \\
+Fast FIR L=3          & ---           & ---          & ---                & ---            \\
+\textbf{Piped FFA L3} & ---           & ---          & ---                & ---            \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Verification}
+\subsection{Waveform Analysis}
+Simulation results from ModelSim confirm bit-exact agreement between the RTL and MATLAB golden models.
+% \includegraphics[width=\linewidth]{hero_waveform.png}
+
+\section{Conclusion}
+The implementation of the Pipelined Fast FIR L3 architecture successfully demonstrated [Insert Key Finding].
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

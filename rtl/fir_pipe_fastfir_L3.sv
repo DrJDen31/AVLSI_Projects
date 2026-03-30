@@ -1,7 +1,7 @@
 import coeff_pkg::*;
 
 module fir_pipe_fastfir_L3 #(
-    parameter int PIPE_EVERY = 4 // Pipeline after this many taps in the subfilters
+    parameter int PIPE_EVERY = 4
 )(
     input  logic                 clk,
     input  logic                 rst_n,
@@ -17,13 +17,16 @@ module fir_pipe_fastfir_L3 #(
     output logic signed [DATA_W-1:0] data_out_2  // y[3k+2]
 );
 
-    // This architecture combines pipeline registers with L=3 Fast FIR.
-    // We break the 6 subfilters into pipelined MAC trees.
-    
-    localparam int MULT_W = DATA_W + COEFF_W + 1;
     localparam int L3_TAPS = (N_TAPS + 2) / 3;
-    localparam int NUM_STAGES = (L3_TAPS + PIPE_EVERY - 1) / PIPE_EVERY;
+    localparam int MULT_W = DATA_W + COEFF_W + 1;
+    localparam int MULT_W_P = DATA_W + COEFF_W + 2;
     
+    // Pipelined Adder Tree Stage Sizes (Supports up to PIPE_EVERY^4 parallel taps)
+    localparam int S1_N = (L3_TAPS + PIPE_EVERY - 1) / PIPE_EVERY;
+    localparam int S2_N = (S1_N > 1) ? (S1_N + PIPE_EVERY - 1) / PIPE_EVERY : 1;
+    localparam int S3_N = (S2_N > 1) ? (S2_N + PIPE_EVERY - 1) / PIPE_EVERY : 1;
+    localparam int S4_N = 1;
+
     // Polyphase and pre-addition coefficients
     logic signed [COEFF_W-1:0] h0 [0:L3_TAPS-1];
     logic signed [COEFF_W-1:0] h1 [0:L3_TAPS-1];
@@ -58,19 +61,14 @@ module fir_pipe_fastfir_L3 #(
     logic signed [DATA_W:0] dl_x0_p_x1 [0:L3_TAPS-1];
     logic signed [DATA_W:0] dl_x1_p_x2 [0:L3_TAPS-1];
     logic signed [DATA_W:0] dl_x0_p_x2 [0:L3_TAPS-1];
-    
-    logic [NUM_STAGES:0] valid_sr;
 
-    // Shift Registers and Valid Pipeline
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (int i = 0; i < L3_TAPS; i++) begin
                 dl_x0[i] <= '0; dl_x1[i] <= '0; dl_x2[i] <= '0;
                 dl_x0_p_x1[i] <= '0; dl_x1_p_x2[i] <= '0; dl_x0_p_x2[i] <= '0;
             end
-            valid_sr[0] <= 1'b0;
         end else begin
-            valid_sr[0] <= valid_in;
             if (valid_in) begin
                 dl_x0[0] <= data_in_0; dl_x1[0] <= data_in_1; dl_x2[0] <= data_in_2;
                 dl_x0_p_x1[0] <= data_in_0 + data_in_1;
@@ -87,13 +85,13 @@ module fir_pipe_fastfir_L3 #(
         end
     end
 
-    // Multipliers (Combinational)
+    // Combinational Multipliers
     logic signed [MULT_W-1:0] m_p0 [0:L3_TAPS-1];
     logic signed [MULT_W-1:0] m_p1 [0:L3_TAPS-1];
     logic signed [MULT_W-1:0] m_p2 [0:L3_TAPS-1];
-    logic signed [DATA_W+COEFF_W+1:0] m_p3 [0:L3_TAPS-1]; // Note: DATA_W+COEFF_W+2 width
-    logic signed [DATA_W+COEFF_W+1:0] m_p4 [0:L3_TAPS-1];
-    logic signed [DATA_W+COEFF_W+1:0] m_p5 [0:L3_TAPS-1];
+    logic signed [MULT_W_P-1:0] m_p3 [0:L3_TAPS-1];
+    logic signed [MULT_W_P-1:0] m_p4 [0:L3_TAPS-1];
+    logic signed [MULT_W_P-1:0] m_p5 [0:L3_TAPS-1];
     
     always_comb begin
         for (int i = 0; i < L3_TAPS; i++) begin
@@ -106,101 +104,140 @@ module fir_pipe_fastfir_L3 #(
         end
     end
 
-    // Pipelined Subfilter Accumulators
-    logic signed [ACC_W-1:0] acc_p0_pipe [0:NUM_STAGES];
-    logic signed [ACC_W-1:0] acc_p1_pipe [0:NUM_STAGES];
-    logic signed [ACC_W-1:0] acc_p2_pipe [0:NUM_STAGES];
-    logic signed [ACC_W-1:0] acc_p3_pipe [0:NUM_STAGES];
-    logic signed [ACC_W-1:0] acc_p4_pipe [0:NUM_STAGES];
-    logic signed [ACC_W-1:0] acc_p5_pipe [0:NUM_STAGES];
-
-    // Hoisted chunk sums (module scope for Quartus compatibility)
-    logic signed [ACC_W-1:0] c_p0 [0:NUM_STAGES-1];
-    logic signed [ACC_W-1:0] c_p1 [0:NUM_STAGES-1];
-    logic signed [ACC_W-1:0] c_p2 [0:NUM_STAGES-1];
-    logic signed [ACC_W-1:0] c_p3 [0:NUM_STAGES-1];
-    logic signed [ACC_W-1:0] c_p4 [0:NUM_STAGES-1];
-    logic signed [ACC_W-1:0] c_p5 [0:NUM_STAGES-1];
-
-    // Compute chunk sums (Combinational)
-    always_comb begin
-        for (int s = 0; s < NUM_STAGES; s++) begin
-            c_p0[s] = '0; c_p1[s] = '0; c_p2[s] = '0;
-            c_p3[s] = '0; c_p4[s] = '0; c_p5[s] = '0;
-            
-            for (int j = 0; j < PIPE_EVERY; j++) begin
-                if (s * PIPE_EVERY + j < L3_TAPS) begin
-                    c_p0[s] = c_p0[s] + {{ (ACC_W - MULT_W){m_p0[s * PIPE_EVERY + j][MULT_W-1]} }, m_p0[s * PIPE_EVERY + j]};
-                    c_p1[s] = c_p1[s] + {{ (ACC_W - MULT_W){m_p1[s * PIPE_EVERY + j][MULT_W-1]} }, m_p1[s * PIPE_EVERY + j]};
-                    c_p2[s] = c_p2[s] + {{ (ACC_W - MULT_W){m_p2[s * PIPE_EVERY + j][MULT_W-1]} }, m_p2[s * PIPE_EVERY + j]};
-                    
-                    c_p3[s] = c_p3[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p3[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p3[s * PIPE_EVERY + j]};
-                    c_p4[s] = c_p4[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p4[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p4[s * PIPE_EVERY + j]};
-                    c_p5[s] = c_p5[s] + {{ (ACC_W - (DATA_W+COEFF_W+2)){m_p5[s * PIPE_EVERY + j][DATA_W+COEFF_W+1]} }, m_p5[s * PIPE_EVERY + j]};
-                end
-            end
-        end
-    end
+    // Pipelined Adder Tree Arrays
+    logic signed [ACC_W-1:0] p0_s1 [0:S1_N-1], p1_s1 [0:S1_N-1], p2_s1 [0:S1_N-1], p3_s1 [0:S1_N-1], p4_s1 [0:S1_N-1], p5_s1 [0:S1_N-1];
+    logic signed [ACC_W-1:0] p0_s2 [0:S2_N-1], p1_s2 [0:S2_N-1], p2_s2 [0:S2_N-1], p3_s2 [0:S2_N-1], p4_s2 [0:S2_N-1], p5_s2 [0:S2_N-1];
+    logic signed [ACC_W-1:0] p0_s3 [0:S3_N-1], p1_s3 [0:S3_N-1], p2_s3 [0:S3_N-1], p3_s3 [0:S3_N-1], p4_s3 [0:S3_N-1], p5_s3 [0:S3_N-1];
+    logic signed [ACC_W-1:0] p0_s4 [0:S4_N-1], p1_s4 [0:S4_N-1], p2_s4 [0:S4_N-1], p3_s4 [0:S4_N-1], p4_s4 [0:S4_N-1], p5_s4 [0:S4_N-1];
     
-    // Pipelined accumulation (Sequential)
+    logic valid_d, valid_s1, valid_s2, valid_s3, valid_s4;
+
+    // Shift registers for valid line matches the 1-cycle latency of the initial split delay lines
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) valid_d <= 1'b0;
+        else valid_d <= valid_in;
+    end
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (int s = 0; s <= NUM_STAGES; s++) begin
-                acc_p0_pipe[s] <= '0; acc_p1_pipe[s] <= '0; acc_p2_pipe[s] <= '0;
-                acc_p3_pipe[s] <= '0; acc_p4_pipe[s] <= '0; acc_p5_pipe[s] <= '0;
-                if (s > 0) valid_sr[s] <= 1'b0;
+            valid_s1 <= 0; valid_s2 <= 0; valid_s3 <= 0; valid_s4 <= 0;
+            for(int i=0; i<S1_N; i++) begin
+                p0_s1[i]<='0; p1_s1[i]<='0; p2_s1[i]<='0; p3_s1[i]<='0; p4_s1[i]<='0; p5_s1[i]<='0;
+            end
+            for(int i=0; i<S2_N; i++) begin
+                p0_s2[i]<='0; p1_s2[i]<='0; p2_s2[i]<='0; p3_s2[i]<='0; p4_s2[i]<='0; p5_s2[i]<='0;
+            end
+            for(int i=0; i<S3_N; i++) begin
+                p0_s3[i]<='0; p1_s3[i]<='0; p2_s3[i]<='0; p3_s3[i]<='0; p4_s3[i]<='0; p5_s3[i]<='0;
+            end
+            for(int i=0; i<S4_N; i++) begin
+                p0_s4[i]<='0; p1_s4[i]<='0; p2_s4[i]<='0; p3_s4[i]<='0; p4_s4[i]<='0; p5_s4[i]<='0;
             end
         end else begin
-            acc_p0_pipe[0] <= '0; acc_p1_pipe[0] <= '0; acc_p2_pipe[0] <= '0;
-            acc_p3_pipe[0] <= '0; acc_p4_pipe[0] <= '0; acc_p5_pipe[0] <= '0;
-            
-            for (int s = 0; s < NUM_STAGES; s++) begin
-                valid_sr[s+1] <= valid_sr[s];
-                
-                if (valid_sr[s]) begin
-                    acc_p0_pipe[s+1] <= acc_p0_pipe[s] + c_p0[s];
-                    acc_p1_pipe[s+1] <= acc_p1_pipe[s] + c_p1[s];
-                    acc_p2_pipe[s+1] <= acc_p2_pipe[s] + c_p2[s];
-                    acc_p3_pipe[s+1] <= acc_p3_pipe[s] + c_p3[s];
-                    acc_p4_pipe[s+1] <= acc_p4_pipe[s] + c_p4[s];
-                    acc_p5_pipe[s+1] <= acc_p5_pipe[s] + c_p5[s];
+            valid_s1 <= valid_d;
+            valid_s2 <= valid_s1;
+            valid_s3 <= valid_s2;
+            valid_s4 <= valid_s3;
+
+            // Stage 1
+            if (valid_d) begin
+                for (int i = 0; i < S1_N; i++) begin
+                    logic signed [ACC_W-1:0] t0, t1, t2, t3, t4, t5;
+                    t0='0; t1='0; t2='0; t3='0; t4='0; t5='0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < L3_TAPS) begin
+                            t0 += {{ (ACC_W - MULT_W){m_p0[i*PIPE_EVERY+j][MULT_W-1]} }, m_p0[i*PIPE_EVERY+j]};
+                            t1 += {{ (ACC_W - MULT_W){m_p1[i*PIPE_EVERY+j][MULT_W-1]} }, m_p1[i*PIPE_EVERY+j]};
+                            t2 += {{ (ACC_W - MULT_W){m_p2[i*PIPE_EVERY+j][MULT_W-1]} }, m_p2[i*PIPE_EVERY+j]};
+                            t3 += {{ (ACC_W - MULT_W_P){m_p3[i*PIPE_EVERY+j][MULT_W_P-1]} }, m_p3[i*PIPE_EVERY+j]};
+                            t4 += {{ (ACC_W - MULT_W_P){m_p4[i*PIPE_EVERY+j][MULT_W_P-1]} }, m_p4[i*PIPE_EVERY+j]};
+                            t5 += {{ (ACC_W - MULT_W_P){m_p5[i*PIPE_EVERY+j][MULT_W_P-1]} }, m_p5[i*PIPE_EVERY+j]};
+                        end
+                    end
+                    p0_s1[i] <= t0; p1_s1[i] <= t1; p2_s1[i] <= t2;
+                    p3_s1[i] <= t3; p4_s1[i] <= t4; p5_s1[i] <= t5;
+                end
+            end
+
+            // Stage 2
+            if (valid_s1) begin
+                for (int i = 0; i < S2_N; i++) begin
+                    logic signed [ACC_W-1:0] t0, t1, t2, t3, t4, t5;
+                    t0='0; t1='0; t2='0; t3='0; t4='0; t5='0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < S1_N) begin
+                            t0 += p0_s1[i*PIPE_EVERY+j]; t1 += p1_s1[i*PIPE_EVERY+j]; t2 += p2_s1[i*PIPE_EVERY+j];
+                            t3 += p3_s1[i*PIPE_EVERY+j]; t4 += p4_s1[i*PIPE_EVERY+j]; t5 += p5_s1[i*PIPE_EVERY+j];
+                        end
+                    end
+                    p0_s2[i] <= t0; p1_s2[i] <= t1; p2_s2[i] <= t2;
+                    p3_s2[i] <= t3; p4_s2[i] <= t4; p5_s2[i] <= t5;
+                end
+            end
+
+            // Stage 3
+            if (valid_s2) begin
+                for (int i = 0; i < S3_N; i++) begin
+                    logic signed [ACC_W-1:0] t0, t1, t2, t3, t4, t5;
+                    t0='0; t1='0; t2='0; t3='0; t4='0; t5='0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < S2_N) begin
+                            t0 += p0_s2[i*PIPE_EVERY+j]; t1 += p1_s2[i*PIPE_EVERY+j]; t2 += p2_s2[i*PIPE_EVERY+j];
+                            t3 += p3_s2[i*PIPE_EVERY+j]; t4 += p4_s2[i*PIPE_EVERY+j]; t5 += p5_s2[i*PIPE_EVERY+j];
+                        end
+                    end
+                    p0_s3[i] <= t0; p1_s3[i] <= t1; p2_s3[i] <= t2;
+                    p3_s3[i] <= t3; p4_s3[i] <= t4; p5_s3[i] <= t5;
+                end
+            end
+
+            // Stage 4 (Final Accumulation)
+            if (valid_s3) begin
+                for (int i = 0; i < S4_N; i++) begin
+                    logic signed [ACC_W-1:0] t0, t1, t2, t3, t4, t5;
+                    t0='0; t1='0; t2='0; t3='0; t4='0; t5='0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < S3_N) begin
+                            t0 += p0_s3[i*PIPE_EVERY+j]; t1 += p1_s3[i*PIPE_EVERY+j]; t2 += p2_s3[i*PIPE_EVERY+j];
+                            t3 += p3_s3[i*PIPE_EVERY+j]; t4 += p4_s3[i*PIPE_EVERY+j]; t5 += p5_s3[i*PIPE_EVERY+j];
+                        end
+                    end
+                    p0_s4[i] <= t0; p1_s4[i] <= t1; p2_s4[i] <= t2;
+                    p3_s4[i] <= t3; p4_s4[i] <= t4; p5_s4[i] <= t5;
                 end
             end
         end
     end
 
-    // Sequential update for z^-1 delayed terms (applies after fully accumulated)
-    // Delay matches valid_sr
+    // Post-addition network delayed variables
     logic signed [ACC_W-1:0] acc_p1_d, acc_p2_d, acc_p4_d;
-    
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             acc_p1_d <= '0; acc_p2_d <= '0; acc_p4_d <= '0;
-        end else if (valid_sr[NUM_STAGES]) begin
-            acc_p1_d <= acc_p1_pipe[NUM_STAGES];
-            acc_p2_d <= acc_p2_pipe[NUM_STAGES];
-            acc_p4_d <= acc_p4_pipe[NUM_STAGES];
+        end else if (valid_s4) begin
+            acc_p1_d <= p1_s4[0];
+            acc_p2_d <= p2_s4[0];
+            acc_p4_d <= p4_s4[0];
         end
     end
 
-    // Post-addition network
+    // Combinational addition
     logic signed [ACC_W-1:0] acc_y0, acc_y1, acc_y2;
     localparam int COEFF_FRAC_BITS = COEFF_W - 1;
-    
     always_comb begin
-        acc_y0 = acc_p0_pipe[NUM_STAGES] + (acc_p4_d - acc_p1_d - acc_p2_d);
-        acc_y1 = acc_p3_pipe[NUM_STAGES] - acc_p0_pipe[NUM_STAGES] - acc_p1_pipe[NUM_STAGES] + acc_p2_d;
-        acc_y2 = acc_p5_pipe[NUM_STAGES] - acc_p0_pipe[NUM_STAGES] - acc_p2_pipe[NUM_STAGES] + acc_p1_pipe[NUM_STAGES];
+        acc_y0 = p0_s4[0] + (acc_p4_d - acc_p1_d - acc_p2_d);
+        acc_y1 = p3_s4[0] - p0_s4[0] - p1_s4[0] + acc_p2_d;
+        acc_y2 = p5_s4[0] - p0_s4[0] - p2_s4[0] + p1_s4[0];
     end
     
+    // Output Registers
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             data_out_0 <= '0; data_out_1 <= '0; data_out_2 <= '0;
             valid_out  <= 1'b0;
         end else begin
-            // Valid out is delayed by one more cycle to match the output registers
-            valid_out <= valid_sr[NUM_STAGES];
-            if (valid_sr[NUM_STAGES]) begin
+            valid_out <= valid_s4;
+            if (valid_s4) begin
                 data_out_0 <= acc_y0[COEFF_FRAC_BITS +: DATA_W];
                 data_out_1 <= acc_y1[COEFF_FRAC_BITS +: DATA_W];
                 data_out_2 <= acc_y2[COEFF_FRAC_BITS +: DATA_W];

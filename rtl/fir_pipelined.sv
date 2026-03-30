@@ -1,9 +1,6 @@
 import coeff_pkg::*;
 
 module fir_pipelined #(
-    // Pipeline granularity: Insert a register every M taps.
-    // If M=1, fully pipelined (reg after every multiply).
-    // If M=4, pipeline every 4th adder.
     parameter int PIPE_EVERY = 4
 )(
     input  logic                 clk,
@@ -17,88 +14,112 @@ module fir_pipelined #(
 );
 
     localparam int MULT_W = DATA_W + COEFF_W;
-    localparam int NUM_STAGES = (N_TAPS + PIPE_EVERY - 1) / PIPE_EVERY;
     
-    // Delay line for input samples
+    // Pipelined Adder Tree Stage Sizes (Supports up to PIPE_EVERY^4 taps)
+    localparam int S1_N = (N_TAPS + PIPE_EVERY - 1) / PIPE_EVERY;
+    localparam int S2_N = (S1_N > 1) ? (S1_N + PIPE_EVERY - 1) / PIPE_EVERY : 1;
+    localparam int S3_N = (S2_N > 1) ? (S2_N + PIPE_EVERY - 1) / PIPE_EVERY : 1;
+    localparam int S4_N = 1;
+
     logic signed [DATA_W-1:0] delay_line [0:N_TAPS-1];
-    
-    // Valid signal shift register (matches algorithmic latency)
-    // Latency = 1 (delay line) + NUM_STAGES (pipeline array)
-    logic [NUM_STAGES:0] valid_sr;
-    
-    // Multipliers (Combinational)
     logic signed [MULT_W-1:0] mult_out [0:N_TAPS-1];
     
-    // Pipelined Accumulator Array
-    // We break the N_TAPS additions into NUM_STAGES chunks.
-    logic signed [ACC_W-1:0] acc_pipe [0:NUM_STAGES];
+    logic signed [ACC_W-1:0] stg1 [0:S1_N-1];
+    logic signed [ACC_W-1:0] stg2 [0:S2_N-1];
+    logic signed [ACC_W-1:0] stg3 [0:S3_N-1];
+    logic signed [ACC_W-1:0] stg4 [0:S4_N-1];
+    
+    logic valid_d, valid_s1, valid_s2, valid_s3, valid_s4;
 
-    // Pre-declared chunk sum for pipeline stages (hoisted out of always_ff)
-    logic signed [ACC_W-1:0] chunk_sum [0:NUM_STAGES-1];
+    // Delay line requires 1 cycle, so valid must be delayed to match
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) valid_d <= 1'b0;
+        else valid_d <= valid_in;
+    end
 
-    // 1. Shift Register (Delay Line)
+    // Shift Register (Delay Line) + Multipliers
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (int i = 0; i < N_TAPS; i++) begin
-                delay_line[i] <= '0;
-            end
-            valid_sr[0] <= 1'b0;
-        end else begin
-            valid_sr[0] <= valid_in;
-            if (valid_in) begin
-                delay_line[0] <= data_in;
-                for (int i = 1; i < N_TAPS; i++) begin
-                    delay_line[i] <= delay_line[i-1];
-                end
-            end
+            for (int i = 0; i < N_TAPS; i++) delay_line[i] <= '0;
+        end else if (valid_in) begin
+            delay_line[0] <= data_in;
+            for (int i = 1; i < N_TAPS; i++) delay_line[i] <= delay_line[i-1];
         end
     end
-
-    // 2. Multipliers (Combinational)
-    always_comb begin
-        for (int i = 0; i < N_TAPS; i++) begin
-            mult_out[i] = delay_line[i] * COEFFS[i];
-        end
-    end
-
-    // 3. Compute chunk sums (Combinational)
-    always_comb begin
-        for (int s = 0; s < NUM_STAGES; s++) begin
-            chunk_sum[s] = '0;
-            for (int j = 0; j < PIPE_EVERY; j++) begin
-                if (s * PIPE_EVERY + j < N_TAPS) begin
-                    chunk_sum[s] = chunk_sum[s] + {{ (ACC_W - MULT_W){mult_out[s * PIPE_EVERY + j][MULT_W-1]} }, mult_out[s * PIPE_EVERY + j]};
-                end
-            end
-        end
-    end
-
-    // 4. Pipelined Accumulator (Sequential)
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            for (int s = 0; s <= NUM_STAGES; s++) begin
-                acc_pipe[s] <= '0;
-                if (s > 0) valid_sr[s] <= 1'b0;
-            end
-        end else begin
-            acc_pipe[0] <= '0;
-            
-            for (int s = 0; s < NUM_STAGES; s++) begin
-                valid_sr[s+1] <= valid_sr[s];
-                
-                if (valid_sr[s]) begin
-                    acc_pipe[s+1] <= acc_pipe[s] + chunk_sum[s];
-                end
-            end
-        end
-    end
-
-    // 5. Output Stage
-    localparam int COEFF_FRAC_BITS = COEFF_W - 1;
     
     always_comb begin
-        valid_out = valid_sr[NUM_STAGES];
-        data_out  = acc_pipe[NUM_STAGES][COEFF_FRAC_BITS +: DATA_W];
+        for (int i = 0; i < N_TAPS; i++) mult_out[i] = delay_line[i] * COEFFS[i];
     end
 
+    // Pipelined Adder Tree
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            valid_s1 <= 0; valid_s2 <= 0; valid_s3 <= 0; valid_s4 <= 0;
+            for(int i=0; i<S1_N; i++) stg1[i] <= '0;
+            for(int i=0; i<S2_N; i++) stg2[i] <= '0;
+            for(int i=0; i<S3_N; i++) stg3[i] <= '0;
+            stg4[0] <= '0;
+        end else begin
+            valid_s1 <= valid_d;
+            valid_s2 <= valid_s1;
+            valid_s3 <= valid_s2;
+            valid_s4 <= valid_s3;
+
+            // Stage 1
+            if (valid_d) begin
+                for (int i = 0; i < S1_N; i++) begin
+                    logic signed [ACC_W-1:0] temp;
+                    temp = '0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < N_TAPS)
+                            temp += {{ (ACC_W - MULT_W){mult_out[i*PIPE_EVERY + j][MULT_W-1]} }, mult_out[i*PIPE_EVERY + j]};
+                    end
+                    stg1[i] <= temp;
+                end
+            end
+
+            // Stage 2
+            if (valid_s1) begin
+                for (int i = 0; i < S2_N; i++) begin
+                    logic signed [ACC_W-1:0] temp;
+                    temp = '0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < S1_N)
+                            temp += stg1[i*PIPE_EVERY + j];
+                    end
+                    stg2[i] <= temp;
+                end
+            end
+
+            // Stage 3
+            if (valid_s2) begin
+                for (int i = 0; i < S3_N; i++) begin
+                    logic signed [ACC_W-1:0] temp;
+                    temp = '0;
+                    for (int j = 0; j < PIPE_EVERY; j++) begin
+                        if (i*PIPE_EVERY + j < S2_N)
+                            temp += stg2[i*PIPE_EVERY + j];
+                    end
+                    stg3[i] <= temp;
+                end
+            end
+
+            // Stage 4 (Final Accumulation)
+            if (valid_s3) begin
+                logic signed [ACC_W-1:0] temp;
+                temp = '0;
+                for (int j = 0; j < PIPE_EVERY; j++) begin
+                    if (j < S3_N) temp += stg3[j];
+                end
+                stg4[0] <= temp;
+            end
+        end
+    end
+
+    // Output Stage
+    localparam int COEFF_FRAC_BITS = COEFF_W - 1;
+    always_comb begin
+        valid_out = valid_s4;
+        data_out  = stg4[0][COEFF_FRAC_BITS +: DATA_W];
+    end
 endmodule

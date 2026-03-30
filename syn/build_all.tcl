@@ -23,6 +23,11 @@ set all_architectures {
 # Architectures to SKIP (already have valid results in results/<arch>.txt)
 # Comment out or clear this list to run everything.
 set skip_architectures {
+    fir_direct
+    fir_parallel_L2
+    fir_parallel_L3
+    fir_fastfir_L2
+    fir_fastfir_L3
 }
 
 # =====================================================================
