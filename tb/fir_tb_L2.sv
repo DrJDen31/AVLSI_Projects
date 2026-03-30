@@ -23,11 +23,16 @@ module fir_tb_L2;
     initial begin clk = 0; forever #(CLK_PERIOD/2) clk = ~clk; end
 
     // Change to fir_parallel_L2 or fir_fastfir_L2
-    fir_fastfir_L2 dut (
+    fir_parallel_L2 dut (
         .clk(clk), .rst_n(rst_n),
         .valid_in(valid_in), .data_in_0(data_in0), .data_in_1(data_in1),
         .valid_out(valid_out), .data_out_0(data_out0), .data_out_1(data_out1)
     );
+    // fir_fastfir_L2 dut (
+    //     .clk(clk), .rst_n(rst_n),
+    //     .valid_in(valid_in), .data_in_0(data_in0), .data_in_1(data_in1),
+    //     .valid_out(valid_out), .data_out_0(data_out0), .data_out_1(data_out1)
+    // );
 
     int sample_idx = 0;
     initial begin

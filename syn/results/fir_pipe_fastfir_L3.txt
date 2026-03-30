@@ -1,9 +1,9 @@
 arch=fir_pipe_fastfir_L3
-alms=14374
-regs=9279
+alms=14270
+regs=9385
 dsps=156
-fmax=57.6
-slack=-7.355
-power=132.08
+fmax=68.4
+slack=-4.619
+power=137.37
 status=OK
-timestamp=Wed Mar 25 20:41:06 EDT 2026
+timestamp=Mon Mar 30 01:19:10 EDT 2026

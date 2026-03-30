@@ -1,9 +1,9 @@
 arch=fir_pipelined
-alms=2176
-regs=4479
+alms=2016
+regs=4971
 dsps=131
-fmax=59.1
-slack=-6.930
-power=91.40
+fmax=68.9
+slack=-4.518
+power=93.02
 status=OK
-timestamp=Wed Mar 25 19:18:07 EDT 2026
+timestamp=Mon Mar 30 01:07:40 EDT 2026

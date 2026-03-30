@@ -1,10 +1,10 @@
-Analysis & Synthesis Status : Successful - Wed Mar 25 20:29:52 2026
+Analysis & Synthesis Status : Successful - Mon Mar 30 01:08:59 2026
 Quartus Prime Version : 20.1.1 Build 720 11/11/2020 SJ Lite Edition
 Revision Name : fir_filters
 Top-level Entity Name : fir_pipe_fastfir_L3
 Family : Cyclone V
 Logic utilization (in ALMs) : N/A
-Total registers : 9377
+Total registers : 10602
 Total pins : 100
 Total virtual pins : 0
 Total block memory bits : 0

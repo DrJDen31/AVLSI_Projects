@@ -6,6 +6,7 @@
 \usepackage{geometry}
 \usepackage{hyperref}
 \usepackage{titlesec}
+\usepackage{lipsum} % For generating filler text if needed
 
 \geometry{letterpaper, margin=0.75in}
 \hypersetup{colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan}
@@ -19,58 +20,88 @@
 \maketitle
 
 \begin{abstract}
-This report details the implementation of seven distinct FIR filter architectures, ranging from a direct-form baseline to a high-speed Pipelined Fast FIR (FFA) design. We analyze performance trade-offs in terms of area (ALMs), power, and maximum frequency ($F_{max}$), demonstrating that the FFA L3 architecture provides an optimal balance for parallel DSP processing.
+% TODO: User Fill In
+This report presents a comprehensive design space exploration of 175-tap FIR filter architectures. By analyzing performance metrics such as area (ALMs), power, and $F_{max}$ for seven distinct designs, we demonstrate the throughput advantages of parallel and pipelined structures.
 \end{abstract}
 
 \section{Introduction}
-Digital Finite Impulse Response (FIR) filters are essential components in modern communication systems. As tap counts increase—in this case 175 taps—the hardware complexity and timing constraints become significant challenges. This project explores parallelism and pipelining to overcome these bottlenecks.
+% TODO: User Fill In
+\lipsum[1]
 
-\section{Design Methodology}
-\subsection{MATLAB Model}
-The filter was designed in MATLAB using the \texttt{fir1} function to achieve a [Insert Passband/Stopband] frequency response. Coefficients were quantized to 23-bit signed fixed-point (Q1.22) to minimize quantization noise.
+\section{MATLAB Design Methodology}
+% TODO: User Fill In
 
-\subsection{Quantization and Precision}
+\subsection{Filter Specification}
 \begin{itemize}
-    \item \textbf{Input Data:} 16-bit signed.
-    \item \textbf{Coefficients:} 23-bit signed.
-    \item \textbf{Accumulator:} 49-bit to prevent overflow.
+    \item \textbf{Type:} Low-Pass Equiripple (Parks-McClellan)
+    \item \textbf{Taps:} 175
+    \item \textbf{Transition Band:} 0.2$\pi$ to 0.23$\pi$ rad/sample
+    \item \textbf{Stopband Attenuation:} $>$ 80 dB
 \end{itemize}
 
-\section{Architectures}
-\subsection{Direct Form (L=1)}
-The baseline architecture utilizing a single multiply-accumulate (MAC) chain.
+\subsection{Quantization and Fixed-Point Analysis}
+% Discuss Q1.22 for coefficients, 16-bit input/output, and 49-bit accumulator.
 
-\subsection{Pipelined Direct Form}
-Enhanced $F_{max}$ by transforming the serial summation into a \textbf{Pipelined Adder Tree}, reducing the critical path to 175/PIPE\_EVERY levels.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/plots/FIR_Filter_Frequency_Response.png}
+    \caption{MATLAB frequency response: Original vs. Quantized.}
+\end{figure}
 
-\subsection{Parallel Architectures (L=2, L=3)}
-Standard polyphase implementation where $L$ samples are processed per clock cycle.
+\section{Implemented Architectures}
+We categorize our seven implementations into four architectural paradigms:
 
-\subsection{Fast FIR Algorithm (L=2, L=3)}
-Reduced-complexity parallel designs using the Fast FIR Algorithm (FFA) to minimize the number of required multipliers.
+\subsection{Baseline and Pipelined Designs}
+% Discuss Direct Form (L=1) and Pipelined FIR.
+% Mention the tradeoff between combinational path and cycle latency.
+
+\subsection{Standard Parallel Architectures}
+% Discuss L=2 and L=3 Polyphase decomposition.
+% Highlight the linear area increase ($N \times L$ multipliers).
+
+\subsection{Reduced-Complexity Parallel (Fast FIR)}
+% Discuss the Fast FIR Algorithm (FFA) for L=2 and L=3.
+% Cite Mou & Duhamel \cite{mou1991reduced} for the algorithmic reduction.
+
+\subsection{Pipelined Fast FIR (Optimal)}
+% Discuss the combination of FFA L=3 with pipelining.
 
 \section{Synthesis Results}
+All designs were synthesized and fitted for the Intel Cyclone V FPGA (5CGXFC7C7F23C8) using Quartus Prime Lite.
+
 \begin{table}[h]
 \centering
-\caption{Synthesis Performance Comparison}
+\caption{Hardware Performance Comparison}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Architecture} & \textbf{ALMs} & \textbf{DSP} & \textbf{$F_{max}$} & \textbf{Power} \\ \midrule
-Direct L=1            & ---           & ---          & ---                & ---            \\
-Pipelined L=1         & ---           & ---          & ---                & ---            \\
-Parallel L=3          & ---           & ---          & ---                & ---            \\
-Fast FIR L=3          & ---           & ---          & ---                & ---            \\
-\textbf{Piped FFA L3} & ---           & ---          & ---                & ---            \\ \bottomrule
+\textbf{Architecture} & \textbf{ALMs} & \textbf{DSP} & \textbf{$F_{max}$ (MHz)} & \textbf{Power (mW)} \\ \midrule
+Direct L=1            & 2,003         & 156          & 34.1                     & 122.56              \\
+Pipelined L=1         & 2,016         & 131          & 68.9                     & 93.02               \\
+L=2 Parallel          & 14,119        & 156          & 36.8                     & 227.98              \\
+L=3 Parallel          & 24,726        & 156          & 35.4                     & 354.13              \\
+L=2 Fast FIR          & 18,785        & 0            & 35.4                     & 201.87              \\
+L=3 Fast FIR          & 25,604        & 0            & 35.0                     & 302.06              \\
+\textbf{Piped FFA L3} & \textbf{14,270} & \textbf{156} & \textbf{68.4}            & \textbf{137.37}     \\ \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Verification}
-\subsection{Waveform Analysis}
-Simulation results from ModelSim confirm bit-exact agreement between the RTL and MATLAB golden models.
-% \includegraphics[width=\linewidth]{hero_waveform.png}
+\section{Performance Analysis}
+% Discuss Fmax scaling vs Throughput (MSPS = Fmax * L).
+% Discuss Area Efficiency and Power Efficiency benchmarks.
+
+\section{Functional Verification}
+RTL verification shows bit-exact matches with MATLAB models across all stimuli.
+
+\begin{figure}[h]
+    \centering
+    % Placeholder for your favorite waveform
+    \includegraphics[width=\linewidth]{images/waveforms/pipelined/full.png}
+    \caption{Functional verification: Waveform for [Arch Name].}
+\end{figure}
 
 \section{Conclusion}
-The implementation of the Pipelined Fast FIR L3 architecture successfully demonstrated [Insert Key Finding].
+% TODO: User Fill In
+\lipsum[2]
 
 \bibliographystyle{plain}
 \bibliography{references}

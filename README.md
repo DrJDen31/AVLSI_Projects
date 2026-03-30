@@ -5,7 +5,11 @@ A comprehensive course project implementing a 175-tap low-pass Finite Impulse Re
 This project was developed for the Advanced VLSI course to explore the hardware trade-offs between area, latency, frequency, and throughput ($L$-parallelism) when implementing digital signal processing algorithms. It features automated synthesis evaluation and rigorous mathematical optimizations like the Fast FIR reduced-complexity algorithm.
 
 ## 🚀 Project Documentation
-The complete hardware evaluation and design process is documented in five sections:
+The complete hardware evaluation and design process, including architectural diagrams and comparative analysis, is available in the final report:
+
+### 📄 [**Final Project Report (PDF)**](Project.pdf)
+
+For detailed breakdowns of specific phases, see the following:
 
 1. [**MATLAB Filter Design**](docs/1_matlab_design.md): Details the 175-tap Parks-McClellan (`firpm`) filter design and automated test vector generation.
 2. [**Quantization Analysis & Overflow Prevention**](docs/2_quantization.md): Proves the necessity of 22 fractional bits to achieve the 80 dB attenuation spec and derives the 49-bit mathematically safe accumulator width.

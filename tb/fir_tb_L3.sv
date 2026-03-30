@@ -29,6 +29,11 @@ module fir_tb_L3;
     //     .valid_in(valid_in), .data_in_0(data_in0), .data_in_1(data_in1), .data_in_2(data_in2),
     //     .valid_out(valid_out), .data_out_0(data_out0), .data_out_1(data_out1), .data_out_2(data_out2)
     // );
+    // fir_fastfir_L3 dut (
+    //     .clk(clk), .rst_n(rst_n),
+    //     .valid_in(valid_in), .data_in_0(data_in0), .data_in_1(data_in1), .data_in_2(data_in2),
+    //     .valid_out(valid_out), .data_out_0(data_out0), .data_out_1(data_out1), .data_out_2(data_out2)
+    // );
     fir_pipe_fastfir_L3 dut (
         .clk(clk), .rst_n(rst_n),
         .valid_in(valid_in), .data_in_0(data_in0), .data_in_1(data_in1), .data_in_2(data_in2),

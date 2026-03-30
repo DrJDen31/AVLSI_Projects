@@ -19,16 +19,16 @@ module fir_tb_L1;
     initial begin clk = 0; forever #(CLK_PERIOD/2) clk = ~clk; end
 
     // Change this instantiation to test fir_direct or fir_pipelined
-    // fir_direct dut (
-    //     .clk(clk), .rst_n(rst_n),
-    //     .valid_in(valid_in), .data_in(data_in),
-    //     .valid_out(valid_out), .data_out(data_out)
-    // );
-    fir_pipelined dut (
+    fir_direct dut (
         .clk(clk), .rst_n(rst_n),
         .valid_in(valid_in), .data_in(data_in),
         .valid_out(valid_out), .data_out(data_out)
     );
+    // fir_pipelined dut (
+    //     .clk(clk), .rst_n(rst_n),
+    //     .valid_in(valid_in), .data_in(data_in),
+    //     .valid_out(valid_out), .data_out(data_out)
+    // );
 
     int sample_idx = 0;
     initial begin
