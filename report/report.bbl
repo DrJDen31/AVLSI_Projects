@@ -1,3 +1,26 @@
-\begin{thebibliography}{}
+\begin{thebibliography}{1}
+
+\bibitem{intel_cyclonev}
+Intel Corporation.
+\newblock Cyclone v device handbook.
+\newblock
+  \url{https://www.intel.com/content/www/us/en/docs/programmable/683102/current.html},
+  2020.
+
+\bibitem{mou1991reduced}
+Zhi-Jian Mou and Pierre Duhamel.
+\newblock Reduced complexity vlsi implementation of discrete-time fir filters.
+\newblock {\em IEEE Transactions on Circuits and Systems}, 38(3):281--284,
+  1991.
+
+\bibitem{parhi1999vlsi}
+Keshab~K Parhi.
+\newblock Vlsi digital signal processing systems: Design and implementation.
+\newblock 1999.
+
+\bibitem{proakis2006digital}
+John~G Proakis and Dimitris~K Manolakis.
+\newblock {\em Digital Signal Processing}.
+\newblock Pearson Education India, 2006.
 
 \end{thebibliography}

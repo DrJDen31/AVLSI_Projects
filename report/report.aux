@@ -16,19 +16,150 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}MATLAB Design Methodology}{1}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Filter Specification}{1}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Quantization and Fixed-Point Analysis}{1}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Implemented Architectures}{1}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Quantization and Fixed-Point Analysis}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces MATLAB frequency response: Original vs. Quantized.}}{2}{figure.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Implemented Architectures}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Baseline and Pipelined Designs (L=1)}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces RTL view of a pipelined filter tap. Note the registers ($DFF$) placed after the multiplier and between adder stages to break the combinational path, enabling a significantly higher $F_{max}$.}}{3}{figure.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Parallel Polyphase Architectures (L=2, L=3)}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces RTL view of the L=3 Parallel architecture. This "brute-force" polyphase decomposition utilizes 9 distinct sub-filter blocks to process three input samples ($x_0, x_1, x_2$) simultaneously.}}{3}{figure.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Reduced-Complexity Parallel (Fast FIR)}{4}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces RTL view of the L=3 Fast FIR pre-processing logic. By performing pre-additions (e.g., $x_0 + x_1$) before the sub-filters, the total multiplier count is reduced from 9 to 6 for the L=3 case.}}{4}{figure.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Synthesis Results}{4}{section.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Hardware Performance Comparison}}{4}{table.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Performance Analysis}{5}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{5}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Functional Verification}{6}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Full Signal Test}{6}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.1}Direct Form}{6}{subsubsection.7.1.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Full Signal Test: Direct Form.}}{6}{figure.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.2}Pipelined FIR}{6}{subsubsection.7.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Full Signal Test: Pipelined FIR.}}{6}{figure.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.3}Parallel L=2}{7}{subsubsection.7.1.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Full Signal Test: Parallel L=2 (Lanes).}}{7}{figure.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Full Signal Test: Parallel L=2 (Reconstructed).}}{7}{figure.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.4}Fast FIR L=2}{7}{subsubsection.7.1.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Full Signal Test: Fast FIR L=2 (Lanes).}}{7}{figure.9}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Full Signal Test: Fast FIR L=2 (Reconstructed).}}{8}{figure.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.5}Parallel L=3}{8}{subsubsection.7.1.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Full Signal Test: Parallel L=3 (Lanes).}}{8}{figure.11}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Full Signal Test: Parallel L=3 (Reconstructed).}}{8}{figure.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.6}Fast FIR L=3}{9}{subsubsection.7.1.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Full Signal Test: Fast FIR L=3 (Lanes).}}{9}{figure.13}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Full Signal Test: Fast FIR L=3 (Reconstructed).}}{9}{figure.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.1.7}Pipelined Fast FIR L=3}{9}{subsubsection.7.1.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Full Signal Test: Pipelined Fast FIR L=3 (Lanes).}}{9}{figure.15}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Full Signal Test: Pipelined Fast FIR L=3 (Reconstructed).}}{10}{figure.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Impulse Response}{10}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.1}Direct Form}{10}{subsubsection.7.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Impulse Response: Direct Form.}}{10}{figure.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.2}Pipelined FIR}{10}{subsubsection.7.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Impulse Response: Pipelined FIR.}}{10}{figure.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.3}Parallel L=2}{11}{subsubsection.7.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Impulse Response: Parallel L=2.}}{11}{figure.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.4}Fast FIR L=2}{11}{subsubsection.7.2.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Impulse Response: Fast FIR L=2.}}{11}{figure.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.5}Parallel L=3}{11}{subsubsection.7.2.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Impulse Response: Parallel L=3.}}{11}{figure.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.6}Fast FIR L=3}{12}{subsubsection.7.2.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Impulse Response: Fast FIR L=3.}}{12}{figure.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.7}Pipelined Fast FIR L=3}{12}{subsubsection.7.2.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Impulse Response: Pipelined Fast FIR L=3.}}{12}{figure.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Square Wave}{13}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1}Direct Form}{13}{subsubsection.7.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Square Wave: Direct Form.}}{13}{figure.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.2}Pipelined FIR}{13}{subsubsection.7.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Square Wave: Pipelined FIR.}}{13}{figure.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3}Parallel L=2}{13}{subsubsection.7.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {26}{\ignorespaces Square Wave: Parallel L=2.}}{13}{figure.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.4}Fast FIR L=2}{14}{subsubsection.7.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Square Wave: Fast FIR L=2.}}{14}{figure.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.5}Parallel L=3}{14}{subsubsection.7.3.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces Square Wave: Parallel L=3.}}{14}{figure.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.6}Fast FIR L=3}{15}{subsubsection.7.3.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {29}{\ignorespaces Square Wave: Fast FIR L=3.}}{15}{figure.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.7}Pipelined Fast FIR L=3}{15}{subsubsection.7.3.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Square Wave: Pipelined Fast FIR L=3.}}{15}{figure.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Low Frequency}{16}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.1}Direct Form}{16}{subsubsection.7.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Low Frequency: Direct Form.}}{16}{figure.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.2}Pipelined FIR}{16}{subsubsection.7.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Low Frequency: Pipelined FIR.}}{16}{figure.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.3}Parallel L=2}{16}{subsubsection.7.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {33}{\ignorespaces Low Frequency: Parallel L=2.}}{16}{figure.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.4}Fast FIR L=2}{17}{subsubsection.7.4.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces Low Frequency: Fast FIR L=2.}}{17}{figure.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.5}Parallel L=3}{17}{subsubsection.7.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {35}{\ignorespaces Low Frequency: Parallel L=3.}}{17}{figure.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.6}Fast FIR L=3}{17}{subsubsection.7.4.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {36}{\ignorespaces Low Frequency: Fast FIR L=3.}}{17}{figure.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.4.7}Pipelined Fast FIR L=3}{18}{subsubsection.7.4.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {37}{\ignorespaces Low Frequency: Pipelined Fast FIR L=3.}}{18}{figure.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}High Frequency}{18}{subsection.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.1}Direct Form}{18}{subsubsection.7.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {38}{\ignorespaces High Frequency: Direct Form.}}{18}{figure.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.2}Pipelined FIR}{19}{subsubsection.7.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {39}{\ignorespaces High Frequency: Pipelined FIR.}}{19}{figure.39}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.3}Parallel L=2}{19}{subsubsection.7.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {40}{\ignorespaces High Frequency: Parallel L=2.}}{19}{figure.40}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.4}Fast FIR L=2}{19}{subsubsection.7.5.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {41}{\ignorespaces High Frequency: Fast FIR L=2.}}{19}{figure.41}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.5}Parallel L=3}{20}{subsubsection.7.5.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {42}{\ignorespaces High Frequency: Parallel L=3.}}{20}{figure.42}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.6}Fast FIR L=3}{20}{subsubsection.7.5.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {43}{\ignorespaces High Frequency: Fast FIR L=3.}}{20}{figure.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.5.7}Pipelined Fast FIR L=3}{21}{subsubsection.7.5.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {44}{\ignorespaces High Frequency: Pipelined Fast FIR L=3.}}{21}{figure.44}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Quantized Performance}{21}{subsection.7.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.1}Direct Form}{21}{subsubsection.7.6.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {45}{\ignorespaces Quantized Performance: Direct Form.}}{21}{figure.45}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.2}Pipelined FIR}{22}{subsubsection.7.6.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {46}{\ignorespaces Quantized Performance: Pipelined FIR.}}{22}{figure.46}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.3}Parallel L=2}{22}{subsubsection.7.6.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {47}{\ignorespaces Quantized Performance: Parallel L=2.}}{22}{figure.47}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.4}Fast FIR L=2}{22}{subsubsection.7.6.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {48}{\ignorespaces Quantized Performance: Fast FIR L=2.}}{22}{figure.48}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.5}Parallel L=3}{23}{subsubsection.7.6.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {49}{\ignorespaces Quantized Performance: Parallel L=3.}}{23}{figure.49}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.6}Fast FIR L=3}{23}{subsubsection.7.6.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {50}{\ignorespaces Quantized Performance: Fast FIR L=3.}}{23}{figure.50}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.6.7}Pipelined Fast FIR L=3}{24}{subsubsection.7.6.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {51}{\ignorespaces Quantized Performance: Pipelined Fast FIR L=3.}}{24}{figure.51}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.7}Noisy Signal}{24}{subsection.7.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.1}Direct Form}{24}{subsubsection.7.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {52}{\ignorespaces Noisy Signal: Direct Form.}}{24}{figure.52}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.2}Pipelined FIR}{25}{subsubsection.7.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {53}{\ignorespaces Noisy Signal: Pipelined FIR.}}{25}{figure.53}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.3}Parallel L=2}{25}{subsubsection.7.7.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {54}{\ignorespaces Noisy Signal: Parallel L=2.}}{25}{figure.54}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.4}Fast FIR L=2}{25}{subsubsection.7.7.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {55}{\ignorespaces Noisy Signal: Fast FIR L=2.}}{25}{figure.55}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.5}Parallel L=3}{26}{subsubsection.7.7.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {56}{\ignorespaces Noisy Signal: Parallel L=3.}}{26}{figure.56}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.6}Fast FIR L=3}{26}{subsubsection.7.7.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {57}{\ignorespaces Noisy Signal: Fast FIR L=3.}}{26}{figure.57}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.7.7}Pipelined Fast FIR L=3}{27}{subsubsection.7.7.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {58}{\ignorespaces Noisy Signal: Pipelined Fast FIR L=3.}}{27}{figure.58}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.8}Pipeline Latency}{27}{subsection.7.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.1}Direct Form}{27}{subsubsection.7.8.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {59}{\ignorespaces Pipeline Latency: Direct Form.}}{27}{figure.59}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.2}Pipelined FIR}{28}{subsubsection.7.8.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {60}{\ignorespaces Pipeline Latency: Pipelined FIR.}}{28}{figure.60}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.3}Parallel L=2}{28}{subsubsection.7.8.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {61}{\ignorespaces Pipeline Latency: Parallel L=2.}}{28}{figure.61}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.4}Fast FIR L=2}{28}{subsubsection.7.8.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {62}{\ignorespaces Pipeline Latency: Fast FIR L=2.}}{28}{figure.62}\protected@file@percent }
+\citation{*}
 \bibstyle{plain}
 \bibdata{references}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces MATLAB frequency response: Original vs. Quantized.}}{2}{figure.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Baseline and Pipelined Designs}{2}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Standard Parallel Architectures}{2}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Reduced-Complexity Parallel (Fast FIR)}{2}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Pipelined Fast FIR (Optimal)}{2}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Synthesis Results}{2}{section.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Hardware Performance Comparison}}{2}{table.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Performance Analysis}{2}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Functional Verification}{2}{section.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Functional verification: Waveform for [Arch Name].}}{2}{figure.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{2}{section.7}\protected@file@percent }
-\gdef \@abspage@last{2}
+\bibcite{intel_cyclonev}{1}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.5}Parallel L=3}{29}{subsubsection.7.8.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {63}{\ignorespaces Pipeline Latency: Parallel L=3.}}{29}{figure.63}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.6}Fast FIR L=3}{29}{subsubsection.7.8.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {64}{\ignorespaces Pipeline Latency: Fast FIR L=3.}}{29}{figure.64}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.8.7}Pipelined Fast FIR L=3}{29}{subsubsection.7.8.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {65}{\ignorespaces Pipeline Latency: Pipelined Fast FIR L=3.}}{29}{figure.65}\protected@file@percent }
+\bibcite{mou1991reduced}{2}
+\bibcite{parhi1999vlsi}{3}
+\bibcite{proakis2006digital}{4}
+\gdef \@abspage@last{31}

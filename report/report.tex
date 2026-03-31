@@ -1,4 +1,4 @@
-\documentclass[12pt,twocolumn]{article}
+\documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{amsmath}
@@ -6,21 +6,30 @@
 \usepackage{geometry}
 \usepackage{hyperref}
 \usepackage{titlesec}
-\usepackage{lipsum} % For generating filler text if needed
+\usepackage{float}
+\usepackage{lipsum}
 
 \geometry{letterpaper, margin=0.75in}
 \hypersetup{colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan}
 
-\title{\textbf{Design and Implementation of High-Throughput 175-Tap FIR Filter Architectures}}
-\author{Jaden [Last Name] \\ \small Advanced VLSI Design (ECSE 4xxx) \\ \small Rensselaer Polytechnic Institute}
-\date{\today}
-
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\huge \textbf{Design and Implementation of High-Throughput 175-Tap FIR Filter Architectures} \par}
+    \vspace{1.5cm}
+    {\Large Jaden Tompkins \par}
+    \vspace{0.5cm}
+    {\large Advanced VLSI Design (ECSE 6680) \par}
+    {\large Rensselaer Polytechnic Institute \par}
+    \vfill
+    {\large \today \par}
+\end{titlepage}
+
+\newpage
 
 \begin{abstract}
-% TODO: User Fill In
 This report presents a comprehensive design space exploration of 175-tap FIR filter architectures. By analyzing performance metrics such as area (ALMs), power, and $F_{max}$ for seven distinct designs, we demonstrate the throughput advantages of parallel and pipelined structures.
 \end{abstract}
 
@@ -42,34 +51,65 @@ This report presents a comprehensive design space exploration of 175-tap FIR fil
 \subsection{Quantization and Fixed-Point Analysis}
 % Discuss Q1.22 for coefficients, 16-bit input/output, and 49-bit accumulator.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.95\linewidth]{images/plots/FIR_Filter_Frequency_Response.png}
     \caption{MATLAB frequency response: Original vs. Quantized.}
 \end{figure}
 
 \section{Implemented Architectures}
-We categorize our seven implementations into four architectural paradigms:
+We categorize our seven implementations into three primary architectural paradigms, progressing from baseline serial designs to high-throughput parallel and reduced-complexity structures.
 
-\subsection{Baseline and Pipelined Designs}
-% Discuss Direct Form (L=1) and Pipelined FIR.
-% Mention the tradeoff between combinational path and cycle latency.
+\subsection{Baseline and Pipelined Designs (L=1)}
+The baseline Direct Form FIR filter serves as the reference for area and power. To address the critical path bottleneck identified in synthesis, a pipelined architecture was implemented.
 
-\subsection{Standard Parallel Architectures}
-% Discuss L=2 and L=3 Polyphase decomposition.
-% Highlight the linear area increase ($N \times L$ multipliers).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/rtl/pipelined.png}
+    \caption{RTL view of a pipelined filter tap. Note the registers ($DFF$) placed after the multiplier and between adder stages to break the combinational path, enabling a significantly higher $F_{max}$.}
+\end{figure}
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item \textbf{Direct Form:} Single-lane processing with a 175-tap combinational adder chain.
+    \item \textbf{Pipelined FIR:} Insertion of pipeline registers to reduce the critical path to a single multiplier-adder delay. This results in a $\sim 100\%$ increase in $F_{max}$ with minimal ALM overhead.
+\end{itemize}
+
+\subsection{Parallel Polyphase Architectures (L=2, L=3)}
+To increase throughput beyond the $F_{max}$ limit, parallel architectures were implemented using polyphase decomposition. This allows the filter to process $L$ samples per clock cycle.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/rtl/parallel3.png}
+    \caption{RTL view of the L=3 Parallel architecture. This "brute-force" polyphase decomposition utilizes 9 distinct sub-filter blocks to process three input samples ($x_0, x_1, x_2$) simultaneously.}
+\end{figure}
+
+\textbf{Architectural Analysis:}
+\begin{itemize}
+    \item \textbf{Throughput Scaling:} Processing $L$ samples per cycle effectively multiplies the sampling rate by $L$ while operating at a lower internal clock frequency.
+    \item \textbf{Area Trade-off:} Standard parallel designs scale area linearly (or quadratically in terms of sub-filters), requiring $L^2$ sub-filter modules.
+\end{itemize}
 
 \subsection{Reduced-Complexity Parallel (Fast FIR)}
-% Discuss the Fast FIR Algorithm (FFA) for L=2 and L=3.
-% Cite Mou & Duhamel \cite{mou1991reduced} for the algorithmic reduction.
+The Fast FIR Algorithm (FFA) was utilized to reduce the number of required multipliers in parallel designs. This is further optimized in the Pipelined Fast FIR L=3 design.
 
-\subsection{Pipelined Fast FIR (Optimal)}
-% Discuss the combination of FFA L=3 with pipelining.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/rtl/fastpipe3.png}
+    \caption{RTL view of the L=3 Fast FIR pre-processing logic. By performing pre-additions (e.g., $x_0 + x_1$) before the sub-filters, the total multiplier count is reduced from 9 to 6 for the L=3 case.}
+\end{figure}
+
+\textbf{Optimizations:}
+\begin{itemize}
+    \item \textbf{Multiplication Reduction:} FFA targets the most hardware-expensive operation. For $L=3$, the complexity is reduced by 33\% compared to standard parallel forms.
+    \item \textbf{Hybrid Pipelining:} The optimal design (Piped FFA L=3) combines FFA logic with pipelined adder trees to achieve both low resource utilization and high frequency.
+\end{itemize}
+
 
 \section{Synthesis Results}
 All designs were synthesized and fitted for the Intel Cyclone V FPGA (5CGXFC7C7F23C8) using Quartus Prime Lite.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Hardware Performance Comparison}
 \begin{tabular}{@{}lcccc@{}}
@@ -89,20 +129,400 @@ L=3 Fast FIR          & 25,604        & 0            & 35.0                     
 % Discuss Fmax scaling vs Throughput (MSPS = Fmax * L).
 % Discuss Area Efficiency and Power Efficiency benchmarks.
 
-\section{Functional Verification}
-RTL verification shows bit-exact matches with MATLAB models across all stimuli.
 
-\begin{figure}[h]
-    \centering
-    % Placeholder for your favorite waveform
-    \includegraphics[width=\linewidth]{images/waveforms/pipelined/full.png}
-    \caption{Functional verification: Waveform for [Arch Name].}
-\end{figure}
 
 \section{Conclusion}
 % TODO: User Fill In
 \lipsum[2]
 
+\newpage
+\section{Functional Verification}
+RTL verification shows bit-exact matches with MATLAB models across all stimuli. The following waveforms demonstrate functional correctness for each of the seven architectures.
+
+\subsection{Full Signal Test}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/full.png}
+    \caption{Full Signal Test: Direct Form.}
+\end{figure}
+
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/full.png}
+    \caption{Full Signal Test: Pipelined FIR.}
+\end{figure}
+
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/full.png}
+    \caption{Full Signal Test: Parallel L=2 (Lanes).}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/reconstruction.png}
+    \caption{Full Signal Test: Parallel L=2 (Reconstructed).}
+\end{figure}
+
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/full.png}
+    \caption{Full Signal Test: Fast FIR L=2 (Lanes).}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/reconstruction.png}
+    \caption{Full Signal Test: Fast FIR L=2 (Reconstructed).}
+\end{figure}
+
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/full.png}
+    \caption{Full Signal Test: Parallel L=3 (Lanes).}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/reconstructed.png}
+    \caption{Full Signal Test: Parallel L=3 (Reconstructed).}
+\end{figure}
+
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/full.png}
+    \caption{Full Signal Test: Fast FIR L=3 (Lanes).}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/reconstruction.png}
+    \caption{Full Signal Test: Fast FIR L=3 (Reconstructed).}
+\end{figure}
+
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/full.png}
+    \caption{Full Signal Test: Pipelined Fast FIR L=3 (Lanes).}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/reconstructed.png}
+    \caption{Full Signal Test: Pipelined Fast FIR L=3 (Reconstructed).}
+\end{figure}
+
+\subsection{Impulse Response}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/impulse.png}
+    \caption{Impulse Response: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/impulse.png}
+    \caption{Impulse Response: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/impulse.png}
+    \caption{Impulse Response: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/impulse.png}
+    \caption{Impulse Response: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/impulse.png}
+    \caption{Impulse Response: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/impulse.png}
+    \caption{Impulse Response: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/impulse.png}
+    \caption{Impulse Response: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{Square Wave}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/square.png}
+    \caption{Square Wave: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/square.png}
+    \caption{Square Wave: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/square.png}
+    \caption{Square Wave: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/square.png}
+    \caption{Square Wave: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/square.png}
+    \caption{Square Wave: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/square.png}
+    \caption{Square Wave: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/square.png}
+    \caption{Square Wave: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{Low Frequency}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/low.png}
+    \caption{Low Frequency: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/low.png}
+    \caption{Low Frequency: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/low.png}
+    \caption{Low Frequency: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/low.png}
+    \caption{Low Frequency: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/low.png}
+    \caption{Low Frequency: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/low.png}
+    \caption{Low Frequency: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/low.png}
+    \caption{Low Frequency: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{High Frequency}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/high.png}
+    \caption{High Frequency: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/high.png}
+    \caption{High Frequency: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/high.png}
+    \caption{High Frequency: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/high.png}
+    \caption{High Frequency: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/high.png}
+    \caption{High Frequency: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/high.png}
+    \caption{High Frequency: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/high.png}
+    \caption{High Frequency: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{Quantized Performance}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/quantized.png}
+    \caption{Quantized Performance: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/quantized.png}
+    \caption{Quantized Performance: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/quantized.png}
+    \caption{Quantized Performance: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/quantized.png}
+    \caption{Quantized Performance: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/quantized.png}
+    \caption{Quantized Performance: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/quantized.png}
+    \caption{Quantized Performance: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/quantized.png}
+    \caption{Quantized Performance: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{Noisy Signal}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/noisy.png}
+    \caption{Noisy Signal: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/noisy.png}
+    \caption{Noisy Signal: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/noisy.png}
+    \caption{Noisy Signal: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/noisy.png}
+    \caption{Noisy Signal: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/noisy.png}
+    \caption{Noisy Signal: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/noisy.png}
+    \caption{Noisy Signal: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/noisy.png}
+    \caption{Noisy Signal: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\subsection{Pipeline Latency}
+\subsubsection{Direct Form}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/direct/latency.png}
+    \caption{Pipeline Latency: Direct Form.}
+\end{figure}
+\subsubsection{Pipelined FIR}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/pipelined/latency.png}
+    \caption{Pipeline Latency: Pipelined FIR.}
+\end{figure}
+\subsubsection{Parallel L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel2/latency.png}
+    \caption{Pipeline Latency: Parallel L=2.}
+\end{figure}
+\subsubsection{Fast FIR L=2}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast2/latency.png}
+    \caption{Pipeline Latency: Fast FIR L=2.}
+\end{figure}
+\subsubsection{Parallel L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/parallel3/latency.png}
+    \caption{Pipeline Latency: Parallel L=3.}
+\end{figure}
+\subsubsection{Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fast3/latency.png}
+    \caption{Pipeline Latency: Fast FIR L=3.}
+\end{figure}
+\subsubsection{Pipelined Fast FIR L=3}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/waveforms/fastpipe3/latency.png}
+    \caption{Pipeline Latency: Pipelined Fast FIR L=3.}
+\end{figure}
+
+\nocite{*}
 \bibliographystyle{plain}
 \bibliography{references}
 
