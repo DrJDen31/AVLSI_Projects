@@ -4,10 +4,10 @@ A comprehensive course project implementing a 175-tap low-pass Finite Impulse Re
 
 This project was developed for the Advanced VLSI course to explore the hardware trade-offs between area, latency, frequency, and throughput ($L$-parallelism) when implementing digital signal processing algorithms. It features automated synthesis evaluation and rigorous mathematical optimizations like the Fast FIR reduced-complexity algorithm.
 
-## 🚀 Project Documentation
+## Project Documentation
 The complete hardware evaluation and design process, including architectural diagrams and comparative analysis, is available in the final report:
 
-### 📄 [**Final Project Report (PDF)**](Project.pdf)
+### [**Final Project Report (PDF)**](Project.pdf)
 
 For detailed breakdowns of specific phases, see the following:
 
@@ -17,7 +17,7 @@ For detailed breakdowns of specific phases, see the following:
 4. [**Hardware Implementation Results**](docs/4_hw_results.md): The raw ALM, DSP, Fmax, and Power numbers extracted directly from Intel Quartus.
 5. [**Performance Trade-off Analysis**](docs/5_analysis.md): A detailed conclusion comparing the multiplicative savings of Fast FIR vs. Simple Parallelism, and the $F_{max}$ impact of pipeline isolation.
 
-## 🏗️ Implemented Architectures
+## Implemented Architectures
 
 The `rtl/` directory contains 7 parameterized top-level modules sharing a common AXI-Stream-style valid handshake interface. They all import the auto-generated `coeff_pkg.sv` constants package.
 
@@ -31,7 +31,7 @@ The `rtl/` directory contains 7 parameterized top-level modules sharing a common
 | `fir_fastfir_L3.sv` | **Fast FIR Algorithm $L=3$** (Reduced Complexity) | $2N=350$ | 1 | 3 samples/cycle |
 | `fir_pipe_fastfir_L3.sv` | **Pipelined Fast FIR $L=3$** | $2N=350$ | 16 | 3 samples/cycle |
 
-## 🛠️ How to Reproduce
+## How to Reproduce
 
 ### 1. Generating Coefficients and Test Vectors
 The `/matlab` directory contains the scripts to calculate the 175-tap equiripple filter, determine bit constraints, and generate the hex inputs/outputs.
