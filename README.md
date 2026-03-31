@@ -2,7 +2,8 @@
 
 A comprehensive course project implementing a 175-tap low-pass FIR filter across 7 distinct algorithmic architectures in SystemVerilog, targeting an Intel Cyclone V FPGA.
 
-## **[Final Project Report](report/report.tex)**
+## **[Final Project Report](report/report.pdf)**
+[(LaTeX Source)](report/report.tex)
 > **Key Results:** Achieved **205.2 MSPS** throughput with **0.67 mW/MSPS** power efficiency using a Pipelined Fast FIR ($L=3$) architecture. This project demonstrates massive throughput scaling through polyphase decomposition and algorithmic reduction (FFA).
 
 ---
