@@ -642,6 +642,13 @@ INPUT .\images\plots\FIR_Filter_Frequency_Response.png
 INPUT .\images\plots\FIR_Filter_Frequency_Response.png
 INPUT .\images\plots\FIR_Filter_Frequency_Response.png
 INPUT .\images\plots\FIR_Filter_Frequency_Response.png
+INPUT .\images\plots\Quantization_Effects.png
+INPUT .\images\plots\Quantization_Effects.png
+INPUT images\plots\Quantization_Effects.png
+INPUT .\images\plots\Quantization_Effects.png
+INPUT .\images\plots\Quantization_Effects.png
+INPUT .\images\plots\Quantization_Effects.png
+INPUT .\images\plots\Quantization_Effects.png
 INPUT .\images\rtl\pipelined.png
 INPUT .\images\rtl\pipelined.png
 INPUT images\rtl\pipelined.png

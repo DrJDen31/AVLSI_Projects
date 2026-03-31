@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex report"] 1774927419.61365 "report.aux" "report.bbl" "report" 1774928995.54779 0
+["bibtex report"] 1774929167.52831 "report.aux" "report.bbl" "report" 1774929188.13936 0
   "./references.bib" 1774854687 851 f64942f776da1e7cd90a8070c684e755 ""
   "C:/Users/jaden/AppData/Local/Programs/MiKTeX/bibtex/bst/bibtex/plain.bst" 1291864736 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
-  "report.aux" 1774928994 21212 66d68cd4c454eeb21437ddea4371448f "pdflatex"
+  "report.aux" 1774929187 21441 da1065c9b3f84d09a6269db6bd5af397 "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1774928975.28064 "c:/Users/jaden/OneDrive/Documents/RPI/Spring2026/AdvVLSI/Projects/report/report.tex" "report.pdf" "report" 1774928995.54948 0
+["pdflatex"] 1774929167.89555 "c:/Users/jaden/OneDrive/Documents/RPI/Spring2026/AdvVLSI/Projects/report/report.tex" "report.pdf" "report" 1774929188.14105 0
   "C:/Users/jaden/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1774921325 82507 a9eef8696c92627b87e9975edea03b2a ""
   "C:/Users/jaden/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/tcrm1200.pk" 1686854584 14064 edb31c99a3500d104b3e917da137ce00 ""
   "C:/Users/jaden/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1686247468 23178959 ac1ac3f61e2b2e401e7c4111db9e72b8 ""
@@ -103,8 +103,9 @@
   "C:/Users/jaden/AppData/Local/Programs/MiKTeX/tex/latex/rerunfilecheck/rerunfilecheck.sty" 1751104012 9684 a33a14b82ce60d6e77cb9be689d79ee6 ""
   "C:/Users/jaden/AppData/Local/Programs/MiKTeX/tex/latex/titlesec/titlesec.sty" 1625497667 48833 3b7b4cfab1a3d15596bfd3772a77ab65 ""
   "C:/Users/jaden/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
-  "c:/Users/jaden/OneDrive/Documents/RPI/Spring2026/AdvVLSI/Projects/report/report.tex" 1774928974 32267 0b27dce9ab6cb2a4237e6dd094058e59 ""
+  "c:/Users/jaden/OneDrive/Documents/RPI/Spring2026/AdvVLSI/Projects/report/report.tex" 1774929145 32524 829f8567a9ffce67835754aa26eade27 ""
   "images/plots/FIR_Filter_Frequency_Response.png" 1774928960 373453 2938e7604fb4d1d1ed2b93537c3a1c07 ""
+  "images/plots/Quantization_Effects.png" 1774318857 167181 adb68822b41f4cc755b1aac6c1c00ee8 ""
   "images/rtl/fastpipe3.png" 1774923556 47042 499abb22103c50df86eb461175db05c2 ""
   "images/rtl/parallel3.png" 1774924768 251754 811284bdf8472411863f2d1d7888db11 ""
   "images/rtl/pipelined.png" 1774923897 54637 f43af17a03fa28e7d4667c90a735ad22 ""
@@ -169,10 +170,10 @@
   "images/waveforms/pipelined/noisy.png" 1774849651 51715 5d503232b19858ac6f40e234ddf74b25 ""
   "images/waveforms/pipelined/quantized.png" 1774849623 52366 a65be0c7ddd359f09eda03db81c80479 ""
   "images/waveforms/pipelined/square.png" 1774849528 43432 63ef2f4c268e89b3d01ba7459f3558b8 ""
-  "report.aux" 1774928994 21212 66d68cd4c454eeb21437ddea4371448f "pdflatex"
-  "report.bbl" 1774927419 773 cb0ce4d1ec82b709e2a125c593135867 "bibtex report"
-  "report.out" 1774928994 11840 448b344020890a334e0a7e86a9670cd3 "pdflatex"
-  "report.tex" 1774928974 32267 0b27dce9ab6cb2a4237e6dd094058e59 ""
+  "report.aux" 1774929187 21441 da1065c9b3f84d09a6269db6bd5af397 "pdflatex"
+  "report.bbl" 1774929167 773 cb0ce4d1ec82b709e2a125c593135867 "bibtex report"
+  "report.out" 1774929187 11840 448b344020890a334e0a7e86a9670cd3 "pdflatex"
+  "report.tex" 1774929145 32524 829f8567a9ffce67835754aa26eade27 ""
   (generated)
   "report.aux"
   "report.log"

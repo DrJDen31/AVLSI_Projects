@@ -76,15 +76,22 @@ The filter specifications used across all architectural explorations are as foll
     \item \textbf{Stopband Attenuation:} $>$ 80 dB
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/plots/FIR_Filter_Frequency_Response.png}
+    \caption{MATLAB design process: Iterated tap finding (N=175) to meet the 80 dB stopband requirement.}
+\end{figure}
+
 \subsection{Quantization and Fixed-Point Analysis}
 To optimize hardware resources while maintaining signal integrity, the double-precision coefficients are quantized to a fixed-point representation. A quantization search script iterates through fractional bit widths, identifying that 23 fractional bits (Q1.22 format) are necessary to maintain the 80dB stopband spec without significant degradation.
 
 A comprehensive datapath width analysis was performed to prevent overflow. Using the sum of absolute coefficients, the maximum possible growth of the output was calculated to determine the required number of guard bits. For the 175-tap filter with 16-bit inputs and 24-bit coefficients, a 49-bit accumulator is utilized to guarantee bit-exact correctness throughout the convolution process.
 
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{images/plots/FIR_Filter_Frequency_Response.png}
-    \caption{MATLAB frequency response: Original double-precision vs. 24-bit Quantized.}
+    \includegraphics[width=0.95\linewidth]{images/plots/Quantization_Effects.png}
+    \caption{MATLAB frequency response: Original double-precision vs. 24-bit Quantized (Q1.22) coefficients.}
 \end{figure}
 
 \subsection{Automated Hardware Integration}
