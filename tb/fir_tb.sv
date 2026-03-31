@@ -22,9 +22,8 @@ module fir_tb;
     
     // Load test vectors
     initial begin
-        // Assuming ModelSim is run from the 'tb' directory or project root
-        // We'll use a path relative to the tb directory, but you might need to adjust
-        // based on where ModelSim is launched.
+        // Use relative paths for test vector loading.
+        // Ensure the simulation workspace is set correctly for ModelSim to resolve paths.
         $readmemh("test_vectors/input_stimulus.hex", stimulus_mem);
         $readmemh("test_vectors/golden_output.hex", golden_mem);
     end

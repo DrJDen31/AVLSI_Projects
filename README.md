@@ -1,15 +1,14 @@
 # Advanced VLSI FIR Filter Architecture Space Exploration
 
-A comprehensive course project implementing a 175-tap low-pass Finite Impulse Response (FIR) filter across 7 distinct algorithmic architectures in SystemVerilog, targeting an Intel Cyclone V FPGA.
+A comprehensive course project implementing a 175-tap low-pass FIR filter across 7 distinct algorithmic architectures in SystemVerilog, targeting an Intel Cyclone V FPGA.
 
-This project was developed for the Advanced VLSI course to explore the hardware trade-offs between area, latency, frequency, and throughput ($L$-parallelism) when implementing digital signal processing algorithms. It features automated synthesis evaluation and rigorous mathematical optimizations like the Fast FIR reduced-complexity algorithm.
+## **[Final Project Report](report/report.tex)**
+> **Key Results:** Achieved **205.2 MSPS** throughput with **0.67 mW/MSPS** power efficiency using a Pipelined Fast FIR ($L=3$) architecture. This project demonstrates massive throughput scaling through polyphase decomposition and algorithmic reduction (FFA).
+
+---
 
 ## Project Documentation
-The complete hardware evaluation and design process, including architectural diagrams and comparative analysis, is available in the final report:
-
-### [**Final Project Report (PDF)**](Project.pdf)
-
-For detailed breakdowns of specific phases, see the following:
+The complete hardware evaluation and design process, including architectural diagrams and comparative analysis, is available in the final report linked above. For detailed breakdowns of specific design phases, see the following:
 
 1. [**MATLAB Filter Design**](docs/1_matlab_design.md): Details the 175-tap Parks-McClellan (`firpm`) filter design and automated test vector generation.
 2. [**Quantization Analysis & Overflow Prevention**](docs/2_quantization.md): Proves the necessity of 22 fractional bits to achieve the 80 dB attenuation spec and derives the 49-bit mathematically safe accumulator width.

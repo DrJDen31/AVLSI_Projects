@@ -3,7 +3,7 @@
 % Phase 1: FIR Filter Design
 % 
 % Objective: Design a low-pass FIR filter
-% - Taps: 100 (can be increased if needed)
+% - Taps: 100 (Iteratively optimized for 80dB attenuation)
 % - Transition band: 0.2*pi ~ 0.23*pi rad/sample
 % - Stopband attenuation: >= 80 dB
 % =========================================================================
