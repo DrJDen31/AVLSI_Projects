@@ -55,7 +55,7 @@ This gallery serves as a centralized collection of all visualizations, charts, a
 *Logic schematic for the Multiply-Accumulate (MAC) unit used in the parallel 1D engine.*
 
 
-## 5. RTL Synthesis Artifacts (Pending Capture)
+## 5. RTL Synthesis Artifacts
 
 *The following images are placeholders for screenshots to be manually captured from the Intel Quartus GUI and placed into the `docs/figures/` directory.*
 
