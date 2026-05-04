@@ -3,6 +3,8 @@
 **Course:** Advanced VLSI Design  
 **Description:** A highly parameterized, multi-variant 2D Discrete Cosine Transform (DCT) hardware accelerator in SystemVerilog, optimized for JPEG image compression.
 
+**📖 Live Documentation:** [https://DrJDen31.github.io/AVLSI_Projects](https://DrJDen31.github.io/AVLSI_Projects)
+
 ## Project Resources
 
 - **[Final Technical Report (PDF)](report/main.pdf)**: Comprehensive documentation detailing the architecture, synthesis results, and verification methodology.

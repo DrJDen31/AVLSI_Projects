@@ -46,11 +46,11 @@ This gallery serves as a centralized collection of all visualizations, charts, a
 ![Pipeline Waveform](figures/pipeline_waveform.png)
 *Waveform diagram illustrating the pipeline stages and data flow through the architecture.*
 
-### System Block Diagram (Pending Capture)
+### System Block Diagram
 ![System Block Diagram](figures/system_block_diagram.png)
 *Top-level module hierarchy and system block diagram.*
 
-### MAC Unit Schematic (Pending Capture)
+### MAC Unit Schematic
 ![MAC Unit Schematic](figures/mac_unit_schematic.png)
 *Logic schematic for the Multiply-Accumulate (MAC) unit used in the parallel 1D engine.*
 
