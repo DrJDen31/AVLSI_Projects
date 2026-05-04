@@ -1,0 +1,22 @@
+\section{Introduction}
+
+The proliferation of high-resolution digital media has made efficient image and video compression an essential component of modern computing systems. At the core of the JPEG still-image standard (and many subsequent video coding formats such as MPEG and H.264) lies the Discrete Cosine Transform (DCT). The DCT operates by converting spatial domain image data into the frequency domain, concentrating the majority of the image's signal energy into a few low-frequency coefficients. This property enables highly efficient lossy compression when paired with quantization and entropy coding. 
+
+However, computing the 2D DCT is inherently computationally intensive. A standard $8 \times 8$ pixel block requires numerous complex multiply-accumulate (MAC) operations. While general-purpose software processors can execute the DCT algorithm, they often struggle to meet the strict real-time latency and throughput requirements of high-definition video streams, particularly in energy-constrained embedded edge devices. Consequently, dedicated hardware acceleration using VLSI techniques is essential to achieve the necessary performance while minimizing power consumption and silicon area.
+
+This project focuses on the design, implementation, and analysis of a custom hardware 2D DCT accelerator. Rather than presenting a single static architecture, this work explores the hardware design space by evaluating four distinct microarchitectural configurations:
+\begin{itemize}
+    \item \textbf{D1 (Baseline):} A non-pipelined, scalar architecture utilizing a single MAC unit to minimize area.
+    \item \textbf{D2 (Pipelined):} A scalar architecture enhanced with deep pipeline registers to increase the maximum operating frequency ($F_{max}$).
+    \item \textbf{D3 (Parallel):} A non-pipelined architecture utilizing an 8-way parallel MAC array to compute an entire 1D column or row simultaneously.
+    \item \textbf{D4 (Pipelined + Parallel):} The most aggressive configuration, combining both pipelining and 8-way parallelism to maximize total throughput.
+\end{itemize}
+
+By systematically implementing and synthesizing these four design points, this study quantitatively analyzes the fundamental VLSI tradeoffs between area (LUTs/DSPs), latency, throughput, and efficiency. The ultimate goal is to identify the optimal microarchitectural strategies for accelerating the DCT within modern high-performance systems.
+
+% \begin{figure}[H]
+%     \centering
+%     % \includegraphics[width=0.8\textwidth]{system_block_diagram.pdf}
+%     \caption{System block diagram showing the top-level hierarchy of the 2D DCT Accelerator. (Placeholder)}
+%     \label{fig:system_block}
+% \end{figure}

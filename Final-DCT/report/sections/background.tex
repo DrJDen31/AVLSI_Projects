@@ -1,0 +1,24 @@
+\section{Algorithm Background}
+
+\subsection{The 2D Discrete Cosine Transform}
+The 2D Discrete Cosine Transform (DCT-II) converts an $8 \times 8$ matrix of spatial domain pixels, $x_{i,j}$, into an $8 \times 8$ matrix of frequency domain coefficients, $X_{k,l}$. The mathematical definition is given by:
+
+\begin{equation}
+    X_{k,l} = \alpha_k \alpha_l \sum_{i=0}^{7} \sum_{j=0}^{7} x_{i,j} \cos \left[ \frac{(2i+1)k\pi}{16} \right] \cos \left[ \frac{(2j+1)l\pi}{16} \right]
+\end{equation}
+
+where $0 \leq k, l \leq 7$, and the scaling factors are defined as $\alpha_0 = 1/\sqrt{2}$ and $\alpha_n = 1$ for $n > 0$. The cosine terms represent a set of fixed basis functions. By isolating low-frequency components (which contain the majority of visually significant information) from high-frequency noise, the DCT enables aggressive compression algorithms like JPEG to discard less important data during quantization.
+
+\subsection{Row-Column Decomposition}
+Implementing Equation 1 directly in hardware requires a complex 2D matrix multiplication spanning all 64 pixels simultaneously. However, because the cosine basis functions are separable, the 2D DCT can be mathematically decoupled into two sequential 1D transforms:
+
+\begin{equation}
+    X_{k,l} = \alpha_k \sum_{i=0}^{7} \cos \left[ \frac{(2i+1)k\pi}{16} \right] \left( \alpha_l \sum_{j=0}^{7} x_{i,j} \cos \left[ \frac{(2j+1)l\pi}{16} \right] \right)
+\end{equation}
+
+In hardware, this decomposition is realized by first calculating a 1D DCT across each row of the input block. These intermediate results are written into a transposition buffer memory. Once the buffer is full, the data is read out column-by-column and fed into a second 1D DCT engine. This dramatically simplifies the RTL datapath, allowing a single, highly optimized 1D MAC engine to be reused or cleanly instantiated twice.
+
+\subsection{Fixed-Point Arithmetic and Precision}
+Standard software implementations of the DCT rely on 32-bit or 64-bit floating-point numbers to calculate the irrational cosine coefficients. To achieve real-time area-efficient performance on an FPGA, floating-point math must be abandoned in favor of fixed-point arithmetic. 
+
+In this design, the pre-computed cosine coefficients and the intermediate pixel values are quantized to 16-bit signed integers (using a Q2.14 format for the basis coefficients, providing 14 bits of fractional precision). While this conversion from continuous to discrete mathematics inherently introduces quantization noise, 16 bits provide a sufficient dynamic range. As demonstrated in the results, this precision ensures the final reconstructed image is visually indistinguishable from a floating-point golden reference, maintaining a Peak Signal-to-Noise Ratio (PSNR) exceeding 51 dB.

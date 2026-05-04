@@ -1,0 +1,5 @@
+Source:      golden_coeffs.txt (floating-point DCT, QF=70 quantization)
+Image:       baboon.tiff 512x512
+PSNR:        30.4798 dB
+MSE:         58.2244
+PSNR >= 30:  true

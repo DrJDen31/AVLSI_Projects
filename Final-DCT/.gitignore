@@ -1,0 +1,47 @@
+# Build / sim / synth artifacts
+*.log
+*.wlf
+transcript
+work/
+modelsim.ini
+db/
+incremental_db/
+output_files/
+simulation/
+*.qws
+*.rpt
+*.summary
+*.pof
+*.sof
+*.jdi
+
+# Data / Outputs
+sim/*.hex
+sim/*.txt
+matlab/*.hex
+matlab/*.txt
+python/outputs/*.png
+python/outputs/*.csv
+!python/outputs/figures/
+!python/outputs/figures/*.png
+!python/outputs/figures/*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
+
+# OS
+.DS_Store
+Thumbs.db

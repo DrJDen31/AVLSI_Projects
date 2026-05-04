@@ -1,0 +1,17 @@
+name: RTL Linting
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verilator-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install -y verilator
+      - name: Lint RTL and Testbenches
+        run: verilator --lint-only -Wno-fatal -sv rtl/*.sv tb/*.sv

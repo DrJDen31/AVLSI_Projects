@@ -1,0 +1,35 @@
+\section{Verification}
+
+Ensuring the functional correctness of the hardware across all four architectural configurations requires a robust, automated verification pipeline. The methodology relies on comparing the SystemVerilog RTL simulation outputs against a software-generated golden reference.
+
+\subsection{Golden Reference Generation}
+To establish a ground truth, a high-level mathematical model of the 2D DCT was developed using MATLAB and Python. This software model applies the exact 16-bit Q2.14 fixed-point quantization scheme used in the hardware datapath. By simulating the precision loss in software, the generated output coefficients serve as a bit-accurate ``golden reference.'' The Python infrastructure processes standard test images, extracts $8 \times 8$ pixel blocks, and exports both the raw input pixels and the expected output coefficients to flat text files for the RTL testbench to ingest.
+
+\subsection{Testbench Methodology}
+The SystemVerilog testbench is designed to be highly automated and parameter-aware. Using standard file I/O operations (\texttt{\$readmemh} and \texttt{\$fopen}), the testbench streams the raw pixel data into the \texttt{top\_dct\_accelerator} module while strictly adhering to the valid/ready handshake protocol of the hardware interface. 
+
+As the accelerator processes the blocks, the testbench captures the 2D frequency coefficients and performs a real-time comparison against the golden reference data. Because the hardware datapath performs multiple stages of fixed-point truncation and rounding, minor least-significant bit (LSB) deviations from the ideal Python mathematical model are expected. Therefore, the testbench implements a $\pm 2$ LSB tolerance threshold. If all hardware outputs fall within this strict error margin, the specific design point (D1--D4) is verified as functionally correct.
+
+\subsection{Waveform Analysis}
+In addition to automated data checking, ModelSim was utilized to perform manual waveform analysis. This was critical for debugging the intricate timing of the row-column decomposition, particularly verifying that the transposition buffer correctly filled and drained without dropping data or overwriting active rows. The waveform analysis confirmed that the pipeline stages remained fully saturated during continuous data streaming, and that the stall logic correctly handled back-pressure without corrupting the datapath state.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{transpose_write.png}
+        \caption{Write Phase (Row-Major)}
+        \label{fig:transpose_write}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{transpose_read.png}
+        \caption{Read Phase (Column-Major)}
+        \label{fig:transpose_read}
+    \end{subfigure}
+    \caption{ModelSim waveforms demonstrating the memory addressing patterns of the Transpose Buffer. During the write phase, \texttt{wr\_col} iterates rapidly (0-7) across columns while \texttt{wr\_row} increments row-by-row. During the read phase, the pattern is inverted: \texttt{rd\_row} iterates rapidly across rows while \texttt{rd\_col} increments column-by-column, successfully proving the corner-turning logic.}
+    \label{fig:transpose_waveform}
+\end{figure}

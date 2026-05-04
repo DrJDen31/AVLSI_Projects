@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{graphicx}      % figures
+\usepackage{amsmath}       % DCT equation formatting
+\usepackage{booktabs}      % professional tables
+\usepackage{listings}      % code listings (SystemVerilog)
+\usepackage{pgfplots}      % performance charts in LaTeX
+\usepackage{subcaption}    % side-by-side image comparisons
+\usepackage{caption}
+\captionsetup{justification=centering}
+\usepackage{hyperref}      % clickable links to GitHub
+% \usepackage{siunitx}       % MHz, mW, ns formatting
+\usepackage{float}         % for [H] placement
+\usepackage{tikz}          % for block diagrams
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, calc, backgrounds}
+
+\pgfplotsset{compat=1.18}
+
+% Path to figures
+\graphicspath{{figures/}}
+
+\title{High-Performance 2D DCT Accelerator for JPEG Compression}
+\author{Advanced VLSI Project Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/background}
+\input{sections/architecture}
+\input{sections/verification}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

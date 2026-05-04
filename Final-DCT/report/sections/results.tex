@@ -1,0 +1,117 @@
+\section{Results}
+This section analyzes the empirical performance, resource utilization, and computational fidelity of the four hardware design variations (D1--D4). All designs were synthesized targeting an Intel Cyclone V FPGA.
+
+\subsection{Image Fidelity}
+The primary objective of the 16-bit fixed-point datapath is to maintain visual quality without requiring expensive floating-point resources. As shown in Figure \ref{fig:image_comparison}, the standard Baboon test image is successfully reconstructed by the hardware accelerator with no visually perceptible degradation compared to the original image. Figure \ref{fig:image_comparison} also provides a full-range error demonstration to showcase the absolute magnitude of the reconstruction error, alongside a spatially-rescaled error plot highlighting exactly where within the image the quantization noise occurs.
+
+Quantitatively, the architecture achieves a high Peak Signal-to-Noise Ratio (PSNR) of $51.05\text{ dB}$ and a Structural Similarity Index (SSIM) of $0.9995$ across all variants. Figure \ref{fig:psnr_vs_qf} demonstrates that this fidelity remains highly stable across various JPEG quantization factors. Additionally, Figure \ref{fig:error_histogram} illustrates the statistical distribution of numerical errors, confirming that fixed-point quantization noise is tightly bounded. While the vast majority of pixel errors fall within a strict $\pm 2$ LSB margin, a single statistical outlier with a difference of $+3$ LSB is present. This is entirely mathematically expected; it represents the worst-case compound accumulation of fractional truncation across the two separable 1D transformation passes when compared against an ideal double-precision floating-point reference.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{image_comparison.pdf}
+    \caption{Visual comparison between original and reconstructed images for D1 and D4. The 4th image represents a full-range demonstration of the reconstruction error to showcase the perceivable magnitude of the error, while the 5th image has been rescaled to show where errors occur.}
+    \label{fig:image_comparison}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{psnr_vs_qf.pdf}
+    \caption{Peak Signal-to-Noise Ratio (PSNR) vs. Quantization Quality Factor.}
+    \label{fig:psnr_vs_qf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{error_histogram.pdf}
+    \caption{Statistical distribution of numerical errors due to fixed-point precision.}
+    \label{fig:error_histogram}
+\end{figure}
+
+\subsection{Throughput and Latency Performance}
+The architectural parameterization successfully exposes a wide performance landscape. Table \ref{tab:perf_fidelity} and Figure \ref{fig:perf_comparison} summarize the timing characteristics. The baseline D1 design requires 512 clock cycles to process a single $8 \times 8$ block. By introducing the 8-way parallel MAC array, the D3 and D4 designs slash this latency to just 64 cycles. Furthermore, deep pipelining allows D2 and D4 to achieve maximum operating frequencies ($F_{max}$) of approximately 200 MHz. Ultimately, the combined D4 architecture dominates the absolute throughput metric, processing over 3.04 million blocks per second.
+
+\begin{table}[H]
+    \centering
+    \caption{Detailed Performance and Fidelity Metrics for D1--D4.}
+    \label{tab:perf_fidelity}
+    \begin{tabular}{lccccc}
+        \toprule
+        Design & Latency (Cycles) & Throughput (Blocks/s) & PSNR (dB) & SSIM & $F_{max}$ (MHz) \\
+        \midrule
+        D1 & 512 & 205,000 & 51.05 & 0.9995 & 105 \\
+        D2 & 512 & 410,000 & 51.05 & 0.9995 & 210 \\
+        D3 & 64 & 1,328,000 & 51.05 & 0.9995 & 85 \\
+        D4 & 64 & 3,046,000 & 51.05 & 0.9995 & 195 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{perf_comparison.pdf}
+    \caption{Throughput comparison across design points D1-D4.}
+    \label{fig:perf_comparison}
+\end{figure}
+
+\subsection{Resource Utilization and Pareto Efficiency}
+Achieving high throughput necessitates an inherent tradeoff with physical silicon area. Table \ref{tab:resources} and Figure \ref{fig:hardware_breakdown} detail the FPGA resource footprint. The D1 baseline consumes a minimal 320 Adaptive Logic Modules (ALMs) and a single DSP block. Because an Intel FPGA ALM inherently packages both combinatorial logic (LUTs) and flip-flops (registers) together, the deep pipelining in D2 incurs a remarkably small ALM penalty (an increase of only 130 ALMs) over the D1 baseline. In contrast, implementing the spatial parallelism of D3 requires massive combinatorial adder trees, resulting in an explosion of ALM usage (2,100 ALMs) and 8 DSP blocks. The high-performance D4 design requires 2,600 ALMs and 8 DSP blocks to support both its wide parallel adders and deep pipeline registers. Figures \ref{fig:tech_map_dsp} and \ref{fig:tech_map_dsp_parallel} validate that the synthesis tool successfully inferred the single and parallel MAC units directly into the Cyclone V's hard DSP blocks.
+
+\begin{table}[H]
+    \centering
+    \caption{FPGA Resource Utilization Breakdown (Target: Intel Cyclone V).}
+    \label{tab:resources}
+    \begin{tabular}{lcccc}
+        \toprule
+        Design & ALMs & Registers & DSP Blocks & Memory Bits \\
+        \midrule
+        D1 & 320 & 400 & 1 & 16,384 \\
+        D2 & 450 & 850 & 1 & 16,384 \\
+        D3 & 2,100 & 1,200 & 8 & 32,768 \\
+        D4 & 2,600 & 3,400 & 8 & 32,768 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{hardware_breakdown.pdf}
+    \caption{Breakdown of FPGA resource usage (LUTs, DSPs, Registers).}
+    \label{fig:hardware_breakdown}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{tech_map_dsp.png}
+    \caption{Technology Map showing DSP block inference for a single MAC unit (D1/D2 architectures).}
+    \label{fig:tech_map_dsp}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{tech_map_dsp_parallel.png}
+    \caption{Technology Map showing successful parallel DSP block inference for D3/D4 architectures, with MAC instances containing the primitive blocks.}
+    \label{fig:tech_map_dsp_parallel}
+\end{figure}
+
+To identify the optimal configuration, Figure \ref{fig:area_throughput} plots the Area-Throughput Pareto frontier. While D4 consumes the most hardware resources, Figure \ref{fig:efficiency} reveals that D4 also provides the highest hardware efficiency (Throughput per ALM), proving that the massive throughput gains justify the area cost. Finally, Figure \ref{fig:energy_heatmap} provides a heatmap of the absolute coefficient values in the frequency domain across thousands of blocks. This visually demonstrates the fundamental mathematical property of the DCT, energy compaction, where the vast majority of the image's information is concentrated in the human-readable, low-frequency (top-left) coefficients, keeping most of the significant data while providing an easily compressible long string of trailing zeros.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{area_throughput.pdf}
+    \caption{Area (LUTs) vs. Throughput (Blocks/sec) showing the Pareto frontier.}
+    \label{fig:area_throughput}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{efficiency.pdf}
+    \caption{Hardware efficiency (Throughput per LUT).}
+    \label{fig:efficiency}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{energy_heatmap.pdf}
+    \caption{2D DCT Energy Concentration, demonstrating how visual information is compacted into the low-frequency (top-left) coefficients.}
+    \label{fig:energy_heatmap}
+\end{figure}

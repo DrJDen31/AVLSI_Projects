@@ -1,0 +1,193 @@
+\section{RTL Architecture}
+
+The 2D DCT accelerator is implemented in SystemVerilog using a highly parameterized, modular hierarchy. The architecture is designed to support multiple performance targets by structurally altering the datapath based on compile-time parameters. This allows for an easy comparison between the performance tradeoffs of different architectural designs.
+
+\subsection{Module Hierarchy}
+The top-level \texttt{top\_dct\_accelerator} module coordinates the flow of $8 \times 8$ pixel blocks through a two-stage row-column decomposition pipeline. The primary sub-modules include:
+\begin{itemize}
+    \item \textbf{1D DCT Engine (\texttt{dct\_1d\_engine}):} The core computational unit responsible for executing the 1D transform. It calculates the inner product of the input pixels and the pre-computed cosine basis coefficients stored in internal ROMs. The top-level design instantiates two of these engines: one for the row pass and one for the column pass.
+    \item \textbf{Transpose Buffer (\texttt{transpose\_buffer}):} A specialized memory structure situated between the two 1D engines. It accepts row-wise coefficients from the first engine and outputs them column-wise to the second engine, fulfilling the mathematical requirement of matrix transposition.
+    \item \textbf{Output Buffer:} The final 2D frequency coefficients are truncated and buffered, ensuring sequential row-major order for output to the system bus.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+    \begin{tikzpicture}[
+        node distance=1.2cm and 1.4cm,
+        box/.style={rectangle, draw=blue!60, fill=blue!5, thick, minimum width=2.2cm, minimum height=1.5cm, align=center, text width=2.1cm},
+        fsm/.style={rectangle, draw=red!60, fill=red!5, thick, minimum width=20cm, minimum height=1cm, align=center},
+        arrow/.style={-{Stealth[scale=1.2]}, thick, draw=black!80},
+        dashedarrow/.style={-{Stealth[scale=1.0]}, dashed, draw=red!80, thick}
+    ]
+
+    % Nodes
+    \node[box] (pbb) {Pixel Block\\Buffer\\($8\times 8$)};
+    \node[box, right=of pbb] (row) {Row 1D\\DCT Engine};
+    \node[box, right=of row] (tb) {Transpose\\Buffer\\($8\times 8$)};
+    \node[box, right=of tb] (col) {Col 1D\\DCT Engine};
+    \node[box, right=of col] (quant) {Quantizer};
+    \node[box, right=of quant] (ob) {Output\\Buffer};
+
+    % Inputs/Outputs
+    \coordinate[left=2cm of pbb] (in);
+    \coordinate[right=2.2cm of ob] (out);
+
+    % FSM Node below
+    \path (pbb.south) -- (ob.south) node[midway, below=1.5cm] (fsm_center) {};
+    \node[fsm] at (fsm_center) (fsm) {\textbf{Top-Level Control FSM}};
+
+    % Data path arrows
+    \draw[arrow] (in) -- node[above, font=\footnotesize] {pixel\_in (8b)} node[below, font=\footnotesize] {pixel\_valid} (pbb);
+    \draw[arrow] (pbb) -- node[above, font=\footnotesize] {Row} node[below, font=\footnotesize] {Vector} (row);
+    \draw[arrow] (row) -- node[above, font=\footnotesize] {1D} node[below, font=\footnotesize] {Coeffs} (tb);
+    \draw[arrow] (tb) -- node[above, font=\footnotesize] {Col} node[below, font=\footnotesize] {Vector} (col);
+    \draw[arrow] (col) -- node[above, font=\footnotesize] {2D} node[below, font=\footnotesize] {Coeffs} (quant);
+    \draw[arrow] (quant) -- node[above, font=\footnotesize] {Scaled} (ob);
+    \draw[arrow] (ob) -- node[above, font=\footnotesize] {coeff\_out (16b)} node[below, font=\footnotesize] {coeff\_valid} (out);
+
+    % Control arrows
+    \draw[dashedarrow] (fsm.north -| pbb) -- node[left, font=\scriptsize] {ready/done} (pbb.south);
+    \draw[dashedarrow] (fsm.north -| row) -- node[left, font=\scriptsize] {start/done} (row.south);
+    \draw[dashedarrow] (fsm.north -| tb)  -- node[left, font=\scriptsize] {wr/rd done} (tb.south);
+    \draw[dashedarrow] (fsm.north -| col) -- node[left, font=\scriptsize] {start/done} (col.south);
+    \draw[dashedarrow] (fsm.north -| quant) -- node[left, font=\scriptsize] {start/done} (quant.south);
+    \draw[dashedarrow] (fsm.north -| ob)  -- node[left, font=\scriptsize] {ready/done} (ob.south);
+
+    \end{tikzpicture}
+    }
+    \caption{Top-level architectural dataflow and control hierarchy of the 2D DCT Accelerator.}
+    \label{fig:system_block_diagram}
+\end{figure}
+
+\subsection{Design Space Parameterization (D1--D4)}
+To thoroughly evaluate the area-throughput Pareto frontier, the RTL utilizes \texttt{generate} blocks to instantiate four unique structural variations (D1 through D4), controlled by \texttt{PIPELINED} and \texttt{PARALLEL} parameters.
+
+\subsubsection{D1: Baseline Scalar Engine}
+The D1 configuration (\texttt{PIPELINED=0}, \texttt{PARALLEL=0}) represents the minimal area footprint. The 1D engine contains a single Multiply-Accumulate (MAC) unit. It processes one pixel per clock cycle, requiring 64 cycles to complete a 1D transform of an $8 \times 8$ block (512 cycles total for the full 2D DCT). Figure \ref{fig:rtl_d1} illustrates the synthesized baseline hierarchy.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rtl_viewer_D1.png}
+    \caption{RTL Viewer Schematic for D1 (Baseline) architecture. This minimal design instantiates a single shared Multiply-Accumulate (MAC) unit and a finite state machine that sequentially feeds pixel and coefficient data through the datapath, prioritizing absolute minimal area footprint at the cost of high latency.}
+    \label{fig:rtl_d1}
+\end{figure}
+
+\subsubsection{D2: Pipelined Scalar Engine}
+The D2 configuration (\texttt{PIPELINED=1}, \texttt{PARALLEL=0}) maintains the single MAC unit but introduces deep pipeline registers between the multiplier and accumulator stages, as well as intermediate buffer registers. While the cycle latency remains 512 cycles, the critical path is drastically shortened, allowing the maximum clock frequency ($F_{max}$) to double compared to D1.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{pipeline_waveform.png}
+    \caption{Pipeline timing diagram illustrating data flow and stage progression across the D2 architecture. Notice how the valid signals propagate sequentially through the multiplier, adder, and accumulator stages, ensuring high-frequency operation without combinational logic bottlenecks.}
+    \label{fig:pipeline_waveform}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rtl_viewer_D2.png}
+    \caption{RTL Viewer Schematic for D2 (Pipelined) architecture. The addition of dedicated pipeline registers (visible separating the arithmetic multiplier and adder stages) breaks the critical path of the single MAC unit, allowing for a significantly higher maximum clock frequency.}
+    \label{fig:rtl_d2}
+\end{figure}
+
+\subsubsection{D3: Parallel Array Engine}
+The D3 configuration (\texttt{PIPELINED=0}, \texttt{PARALLEL=1}) optimizes for cycle latency by instantiating an 8-way parallel MAC array within the 1D engine. This allows an entire row or column to be multiplied by the basis coefficients simultaneously. The latency is reduced to 8 cycles for a 1D transform, yielding a total 2D latency of just 64 cycles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rtl_viewer_D3.png}
+    \caption{RTL Viewer Schematic for D3 (Parallel) architecture. Notice the eight parallel MAC units instantiated across the datapath. This broadcast architecture allows an entire column of 8 basis coefficients to be multiplied and accumulated simultaneously against a single pixel.}
+    \label{fig:rtl_d3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \resizebox{0.9\textwidth}{!}{
+    \begin{tikzpicture}[
+        node distance=1.2cm and 1.5cm,
+        register/.style={rectangle, draw=black, fill=gray!10, thick, minimum width=1.5cm, minimum height=1cm, align=center},
+        rom/.style={rectangle, draw=blue!80, fill=blue!10, thick, minimum width=1.5cm, minimum height=1cm, align=center},
+        mac/.style={rectangle, draw=green!60!black, fill=green!5, thick, inner sep=0.4cm},
+        adder/.style={circle, draw=black, thick, minimum size=0.6cm, inner sep=0pt},
+        mult/.style={circle, draw=black, thick, minimum size=0.6cm, inner sep=0pt},
+        arrow/.style={-{Stealth[scale=1.2]}, thick},
+        dots/.style={font=\Huge, align=center}
+    ]
+
+    % Multipliers define the horizontal center line
+    \node[mult] (m0) {$\times$};
+    \node[mult, right=3cm of m0] (m1) {$\times$};
+    \node[dots, right=1.5cm of m1] (dots) {$\cdots$};
+    \node[mult, right=1.5cm of dots] (m7) {$\times$};
+
+    % Input Register on the left
+    \node[register, left=2.5cm of m0] (xreg) {Pixel\\$x[n]$};
+
+    % ROMs above multipliers
+    \node[rom, above=1.5cm of m0] (rom0) {ROM 0\\$C_{0,n}$};
+    \node[rom, above=1.5cm of m1] (rom1) {ROM 1\\$C_{1,n}$};
+    \node[rom, above=1.5cm of m7] (rom7) {ROM 7\\$C_{7,n}$};
+
+    % Adders below multipliers
+    \node[adder, below=1cm of m0] (a0) {$+$};
+    \node[adder, below=1cm of m1] (a1) {$+$};
+    \node[adder, below=1cm of m7] (a7) {$+$};
+
+    % Accumulators below adders
+    \node[register, minimum height=0.6cm, below=0.8cm of a0] (acc0) {Acc 0};
+    \node[register, minimum height=0.6cm, below=0.8cm of a1] (acc1) {Acc 1};
+    \node[register, minimum height=0.6cm, below=0.8cm of a7] (acc7) {Acc 7};
+
+    % Draw MAC unit bounding boxes using fit on background layer
+    \begin{scope}[on background layer]
+        \node[mac, fit=(m0) (a0) (acc0), label={[font=\bfseries, xshift=-0.9cm]above:MAC 0}] (mac0) {};
+        \node[mac, fit=(m1) (a1) (acc1), label={[font=\bfseries, xshift=-0.9cm]above:MAC 1}] (mac1) {};
+        \node[mac, fit=(m7) (a7) (acc7), label={[font=\bfseries, xshift=-0.9cm]above:MAC 7}] (mac7) {};
+    \end{scope}
+
+    % Broadcast x[n]
+    \draw[arrow] (xreg.east) -- (m0.west);
+    \draw[arrow] (m0.east) -- (m1.west);
+    \draw[thick] (m1.east) -- +(0.5,0);
+    \draw[arrow] (dots.east) -- (m7.west);
+
+    % ROM to Mult
+    \draw[arrow] (rom0.south) -- (m0.north);
+    \draw[arrow] (rom1.south) -- (m1.north);
+    \draw[arrow] (rom7.south) -- (m7.north);
+
+    % Mult to Adder
+    \draw[arrow] (m0.south) -- (a0.north);
+    \draw[arrow] (m1.south) -- (a1.north);
+    \draw[arrow] (m7.south) -- (a7.north);
+
+    % Adder to Acc
+    \draw[arrow] (a0.south) -- (acc0.north);
+    \draw[arrow] (a1.south) -- (acc1.north);
+    \draw[arrow] (a7.south) -- (acc7.north);
+
+    % Acc Feedback to Adder
+    \draw[arrow] (acc0.east) -- +(0.5,0) |- (a0.east);
+    \draw[arrow] (acc1.east) -- +(0.5,0) |- (a1.east);
+    \draw[arrow] (acc7.east) -- +(0.5,0) |- (a7.east);
+
+    % Outputs
+    \draw[arrow, dashed] (acc0.south) -- +(0,-0.8) node[below] {$Y_0$};
+    \draw[arrow, dashed] (acc1.south) -- +(0,-0.8) node[below] {$Y_1$};
+    \draw[arrow, dashed] (acc7.south) -- +(0,-0.8) node[below] {$Y_7$};
+
+    \end{tikzpicture}
+    }
+    \caption{D3 Parallel Array Engine datapath: A single pixel $x[n]$ is broadcast to 8 parallel MAC units, each simultaneously multiplying it by a unique basis coefficient $C_{k,n}$.}
+    \label{fig:mac_schematic}
+\end{figure}
+
+\subsubsection{D4: Pipelined and Parallel Engine}
+The D4 configuration (\texttt{PIPELINED=1}, \texttt{PARALLEL=1}) is the most aggressive architecture. It combines the 8-way parallel MAC array to process 8 pixels per cycle, while inserting pipeline registers to break the critical paths generated by the wide parallel adders. This results in the highest absolute throughput (Blocks/sec), achieving a latency of 64 cycles while operating at nearly 200 MHz.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rtl_viewer_D4.png}
+    \caption{RTL Viewer Schematic for D4 (Pipelined + Parallel) architecture. This configuration orthogonally combines the 8-way spatial parallelism of D3 with the deep register pipelining of D2, representing the highest performance tier and optimal throughput-to-area design point.}
+    \label{fig:rtl_d4}
+\end{figure}

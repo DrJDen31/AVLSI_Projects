@@ -1,0 +1,5 @@
+design,alms,registers,fmax_mhz,throughput_blocks_per_sec,dsp_blocks,memory_bits
+D1,320,400,105,205000,1,16384
+D2,450,850,210,410000,1,16384
+D3,2100,1200,85,1328000,8,32768
+D4,2600,3400,195,3046000,8,32768

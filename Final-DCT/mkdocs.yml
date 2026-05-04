@@ -1,0 +1,12 @@
+site_name: 2D DCT Accelerator
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Gallery: gallery.md
+  - Results: results.md
+  - Report: report.md
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: deep purple
