@@ -2,9 +2,13 @@ name: RTL Linting
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - 'Final-DCT/rtl/**'
+      - 'Final-DCT/tb/**'
   pull_request:
-    branches: [ main ]
+    paths:
+      - 'Final-DCT/rtl/**'
+      - 'Final-DCT/tb/**'
 
 jobs:
   verilator-lint:
@@ -14,4 +18,4 @@ jobs:
       - name: Install Verilator
         run: sudo apt-get update && sudo apt-get install -y verilator
       - name: Lint RTL and Testbenches
-        run: verilator --lint-only -Wno-fatal -sv rtl/*.sv tb/*.sv
+        run: verilator --lint-only -Wno-fatal -sv Final-DCT/rtl/*.sv Final-DCT/tb/*.sv

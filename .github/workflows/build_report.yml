@@ -2,9 +2,11 @@ name: Build LaTeX Report
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - 'Final-DCT/report/**'
   pull_request:
-    branches: [ main ]
+    paths:
+      - 'Final-DCT/report/**'
 
 jobs:
   build_latex:
@@ -16,10 +18,10 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: main.tex
-          working_directory: report/
+          working_directory: Final-DCT/report/
           
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v3
         with:
           name: Final-DCT-Report
-          path: report/main.pdf
+          path: Final-DCT/report/main.pdf
