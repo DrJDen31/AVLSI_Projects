@@ -3,8 +3,8 @@
 The 2D DCT accelerator uses the row-column decomposition method. This allows the 2D transform to be computed as two successive 1D transforms.
 
 ## Block Diagram
-
-*(SVG Block Diagram will be inserted here)*
+![Block Diagram](figures/system_block_diagram.png)
+*Top-level module hierarchy and system block diagram.*
 
 ## Module Breakdown
 
